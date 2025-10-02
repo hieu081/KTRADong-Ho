@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý Kiểm tra Đồng hồ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <style>
+      .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: none;
+        margin: auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Responsive table - Hiển thị table trên PC */
+      @media (min-width: 769px) {
+        .table-desktop {
+          display: block;
+        }
+        .mobile-card {
+          display: none !important;
+        }
+      }
+
+      /* Ẩn table và hiển thị card trên mobile */
+      @media (max-width: 768px) {
+        .table-desktop {
+          display: none;
+        }
+        .mobile-card {
+          display: block;
+        }
+        .hidden-mobile-info {
+          display: none !important;
+        }
+      }
+
+      .card {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .card-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap; /* Thêm wrap để tránh tràn */
+      }
+      .card-label {
+        font-weight: bold;
+        color: #4a5568;
+        min-width: 100px;
+        flex-shrink: 0;
+      }
+
+      /* Status badges */
+      .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: bold;
+      }
+      .status-chưa-kiểm-tra {
+        background-color: #fef3c7;
+        color: #d97706;
+      }
+      .status-đã-kiểm-tra {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+      .status-vắng-nhà {
+        background-color: #e0e7ff;
+        color: #3730a3;
+      }
+
+      /* Auto-save indicator */
+      .auto-save-indicator {
+        font-size: 0.75rem;
+        color: #10b981;
+        margin-left: 0.5rem;
+        display: none;
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+      }
+      .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      /* Ghi chú input container */
+      .ghi-chu-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: wrap; /* Thêm wrap để nút lưu không tràn */
+      }
+      .ghi-chu-input {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .save-button {
+        background-color: #3b82f6;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .save-button:hover {
+        background-color: #2563eb;
+      }
+
+      /* Button styles */
+      .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+      }
+      .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #2563eb;
+      }
+      .btn-success {
+        background-color: #10b981;
+        color: white;
+      }
+      .btn-success:hover {
+        background-color: #059669;
+      }
+      .btn-warning {
+        background-color: #f59e0b;
+        color: white;
+      }
+      .btn-warning:hover {
+        background-color: #d97706;
+      }
+      .btn-danger {
+        background-color: #ef4444;
+        color: white;
+      }
+      .btn-danger:hover {
+        background-color: #dc2626;
+      }
+
+      /* Search highlight */
+      .highlight {
+        background-color: #ffeb3b;
+        font-weight: bold;
+      }
+
+      /* Mobile-specific styles */
+      .mobile-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .mobile-info-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .mobile-info-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 2px;
+      }
+      .mobile-info-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      /* Sort arrow */
+      .sort-arrow {
+        margin-left: 4px;
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+      }
+      .sort-asc .sort-arrow {
+        border-bottom: 5px solid #000;
+      }
+      .sort-desc .sort-arrow {
+        border-top: 5px solid #000;
+      }
+
+      /* Tối ưu cho mobile nhỏ (375px) */
+      @media (max-width: 375px) {
+        .container {
+          padding: 0.5rem;
+        }
+        .btn {
+          padding: 10px 12px; /* Tăng padding cho dễ chạm */
+          font-size: 0.875rem;
+        }
+        .ghi-chu-container {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 4px;
+        }
+        .save-button {
+          width: 100%;
+          padding: 8px;
+        }
+        .mobile-info-grid {
+          grid-template-columns: 1fr; /* Chuyển sang 1 cột cho màn nhỏ */
+        }
+        .card-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+        .card-label {
+          min-width: auto;
+          margin-bottom: 2px;
+        }
+        .ghi-chu-input {
+          width: 100%;
+        }
+        .auto-save-indicator {
+          margin-left: 0;
+          text-align: center;
+          display: block;
+        }
+      }
+
+      /* Tối ưu thống kê cho mobile */
+      @media (max-width: 640px) {
+        .stats-grid {
+          grid-template-columns: 1fr 1fr !important;
+        }
+      }
+      @media (max-width: 375px) {
+        .stats-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4 sm:p-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 mb-4">
+        Quản lý Kiểm tra Đồng hồ
+      </h1>
+
+      <!-- Upload CSV -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <h2 class="text-lg sm:text-xl font-semibold mb-3">Tải lên file CSV</h2>
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+          <input
+            type="file"
+            id="csvFile"
+            accept=".csv"
+            class="border p-2 rounded flex-1 w-full"
+          />
+          <button
+            onclick="uploadCSV()"
+            class="btn btn-primary w-full sm:w-auto min-h-[44px]"
+          >
+            📤 Tải lên và Lưu
+          </button>
+          <button
+            onclick="exportToCSV()"
+            class="btn btn-success w-full sm:w-auto min-h-[44px]"
+          >
+            📥 Xuất dữ liệu
+          </button>
+        </div>
+        <div id="loadingSpinner" class="loading-spinner mt-4"></div>
+      </div>
+
+      <!-- Tìm kiếm -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <h2 class="text-lg sm:text-xl font-semibold mb-3">🔍 Tìm kiếm</h2>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Tầng</label>
+            <input
+              type="text"
+              id="searchTang"
+              placeholder="Ví dụ: 02"
+              class="border p-2 rounded w-full min-h-[44px]"
+              oninput="filterData(true)"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Căn</label>
+            <input
+              type="text"
+              id="searchCan"
+              placeholder="Ví dụ: 01"
+              class="border p-2 rounded w-full min-h-[44px]"
+              oninput="filterData(true)"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700"
+              >Trạng thái</label
+            >
+            <select
+              id="searchTrangThai"
+              class="border p-2 rounded w-full min-h-[44px]"
+              onchange="filterData(true)"
+            >
+              <option value="">Tất cả</option>
+              <option value="chưa kiểm tra">Chưa kiểm tra</option>
+              <option value="đã kiểm tra">Đã kiểm tra</option>
+              <option value="vắng nhà">Vắng nhà</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700"
+              >Có ghi chú</label
+            >
+            <select
+              id="searchCoGhiChu"
+              class="border p-2 rounded w-full min-h-[44px]"
+              onchange="filterData(true)"
+            >
+              <option value="">Tất cả</option>
+              <option value="co">Có ghi chú</option>
+              <option value="khong">Không có ghi chú</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700"
+              >Ngày kiểm tra</label
+            >
+            <input
+              type="text"
+              id="searchNgayKiemTra"
+              placeholder="Ví dụ: 29/09"
+              class="border p-2 rounded w-full min-h-[44px]"
+              oninput="filterData(true)"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+              onclick="resetSearch()"
+              class="btn btn-warning w-full min-h-[44px]"
+            >
+              🔄 Đặt lại
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thống kê -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div
+          class="stats-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <div
+            class="bg-blue-50 p-4 rounded-lg text-center border border-blue-200"
+          >
+            <div class="text-2xl font-bold text-blue-600" id="totalCount">
+              0
+            </div>
+            <div class="text-sm text-blue-800">Tổng số căn hộ</div>
+          </div>
+          <div
+            class="bg-green-50 p-4 rounded-lg text-center border border-green-200"
+          >
+            <div class="text-2xl font-bold text-green-600" id="checkedCount">
+              0
+            </div>
+            <div class="text-sm text-green-800">Đã kiểm tra</div>
+          </div>
+          <div
+            class="bg-yellow-50 p-4 rounded-lg text-center border border-yellow-200"
+          >
+            <div class="text-2xl font-bold text-yellow-600" id="uncheckedCount">
+              0
+            </div>
+            <div class="text-sm text-yellow-800">Chưa kiểm tra</div>
+          </div>
+          <div
+            class="bg-indigo-50 p-4 rounded-lg text-center border border-indigo-200"
+          >
+            <div class="text-2xl font-bold text-indigo-600" id="absentCount">
+              0
+            </div>
+            <div class="text-sm text-indigo-800">Vắng nhà</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng dữ liệu -->
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <!-- Desktop Table - Hiển thị trên PC -->
+        <div class="table-container table-desktop overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('id')"
+                  id="header_id"
+                >
+                  Căn hộ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('soCongTo')"
+                  id="header_soCongTo"
+                >
+                  Số công tơ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('chiSo')"
+                  id="header_chiSo"
+                >
+                  Chỉ số <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('gio')"
+                  id="header_gio"
+                >
+                  Giờ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('denNgay')"
+                  id="header_denNgay"
+                >
+                  Đến ngày <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('trangThai')"
+                  id="header_trangThai"
+                >
+                  Trạng thái <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('ngayKiemTra')"
+                  id="header_ngayKiemTra"
+                >
+                  Ngày kiểm tra <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Ghi chú
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="tableBody"
+              class="bg-white divide-y divide-gray-200"
+            ></tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View - Chỉ hiển thị trên mobile -->
+        <div id="mobileCardView" class="mobile-card"></div>
+
+        <!-- Phân trang -->
+        <div class="flex justify-between items-center mt-4 flex-wrap gap-2">
+          <button
+            onclick="prevPage()"
+            class="btn btn-primary min-h-[44px]"
+            id="prevBtn"
+            disabled
+          >
+            ← Trước
+          </button>
+          <span id="pageInfo" class="text-sm text-gray-600"></span>
+          <button
+            onclick="nextPage()"
+            class="btn btn-primary min-h-[44px]"
+            id="nextBtn"
+            disabled
+          >
+            Sau →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal xác nhận -->
+    <div id="confirmModal" class="modal">
+      <div class="modal-content">
+        <h3 class="text-lg font-semibold mb-4" id="modalTitle">Xác nhận</h3>
+        <p id="modalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+        <div class="modal-buttons">
+          <button onclick="closeModal()" class="btn btn-warning min-h-[44px]">
+            Hủy
+          </button>
+          <button
+            onclick="confirmAction()"
+            class="btn btn-success min-h-[44px]"
+            id="confirmBtn"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Firebase Config - kết nối với database
+      const firebaseConfig = {
+        apiKey: "AIzaSyDn7GLPt_K-7Os2olo6XgdS4_kTtPKn_ng",
+        authDomain: "ktradong-ho.firebaseapp.com",
+        databaseURL: "https://ktradong-ho-default-rtdb.firebaseio.com",
+        projectId: "ktradong-ho",
+        storageBucket: "ktradong-ho.firebasestorage.app",
+        messagingSenderId: "806158456825",
+        appId: "1:806158456825:web:2a0ee6650e055488cc8f28",
+        measurementId: "G-6NZ03Z84KY",
+      };
+
+      // Khởi tạo Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      // Biến toàn cục cho phân trang
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let allData = [];
+      let filteredData = [];
+
+      // Biến lưu trữ thông tin cho modal xác nhận
+      let pendingAction = null;
+
+      // Biến cho sắp xếp
+      let sortColumn = "id";
+      let sortDirection = "asc"; // 'asc' hoặc 'desc'
+
+      // Hàm parse mã căn hộ để tách tầng và căn
+      function parseCanHo(maCanHo) {
+        const match = maCanHo.match(/^P1\.(\d{2})(.*)$/);
+        if (match) {
+          return { tang: match[1], can: match[2] };
+        }
+        return { tang: "Unknown", can: maCanHo };
+      }
+
+      // Hàm hiển thị thông báo toast
+      function showToast(message, type = "info") {
+        Toastify({
+          text: message,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: type === "error" ? "#e74c3c" : "#2ecc71",
+          stopOnFocus: true,
+        }).showToast();
+      }
+
+      // Hàm hiển thị modal xác nhận
+      function showModal(title, message, action) {
+        document.getElementById("modalTitle").textContent = title;
+        document.getElementById("modalMessage").textContent = message;
+        document.getElementById("confirmModal").style.display = "block";
+        pendingAction = action;
+      }
+
+      // Hàm đóng modal
+      function closeModal() {
+        document.getElementById("confirmModal").style.display = "none";
+        pendingAction = null;
+      }
+
+      // Hàm xác nhận hành động từ modal
+      function confirmAction() {
+        if (pendingAction) {
+          pendingAction();
+        }
+        closeModal();
+      }
+
+      // Hàm tải lên CSV và lưu vào Realtime Database
+      function uploadCSV() {
+        const fileInput = document.getElementById("csvFile");
+        const spinner = document.getElementById("loadingSpinner");
+        const file = fileInput.files[0];
+
+        // Kiểm tra xem đã chọn file chưa
+        if (!file) {
+          showToast("Vui lòng chọn file CSV!", "error");
+          return;
+        }
+
+        spinner.style.display = "block";
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          try {
+            const csv = e.target.result;
+            const lines = csv.split("\n").slice(1); // Bỏ header
+            const updates = {};
+
+            // Xử lý từng dòng trong file CSV
+            lines.forEach((line) => {
+              if (line.trim()) {
+                const [canHo, soCongTo, chiSo, gio, denNgay] = line.split(",");
+                if (canHo && canHo.trim()) {
+                  const { tang, can } = parseCanHo(canHo.trim());
+                  // Tạo key cho Firebase (thay . bằng _)
+                  const key = canHo.replace(".", "_");
+                  updates[`apartments/${key}`] = {
+                    soCongTo: soCongTo || "NULL",
+                    chiSo: parseFloat(chiSo) || 0,
+                    gio: gio || "",
+                    denNgay: denNgay || "",
+                    tang: tang,
+                    can: can,
+                    trangThai: "chưa kiểm tra",
+                    ghiChu: "",
+                    ngayKiemTra: "",
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+                  };
+                }
+              }
+            });
+
+            // Cập nhật dữ liệu lên Firebase
+            db.ref()
+              .update(updates)
+              .then(() => {
+                showToast(
+                  `Đã lưu ${Object.keys(updates).length} căn hộ thành công!`
+                );
+                fileInput.value = ""; // Reset file input
+              })
+              .catch((err) => {
+                console.error("Lỗi Firebase:", err);
+                showToast("Lỗi khi lưu dữ liệu: " + err.message, "error");
+              })
+              .finally(() => (spinner.style.display = "none"));
+          } catch (error) {
+            console.error("Lỗi xử lý CSV:", error);
+            showToast("Lỗi khi xử lý file CSV: " + error.message, "error");
+            spinner.style.display = "none";
+          }
+        };
+
+        reader.onerror = () => {
+          showToast("Lỗi khi đọc file!", "error");
+          spinner.style.display = "none";
+        };
+
+        reader.readAsText(file, "UTF-8");
+      }
+
+      // Hàm xuất dữ liệu ra CSV với hỗ trợ UTF-8 (thêm BOM cho tiếng Việt)
+      function exportToCSV() {
+        if (filteredData.length === 0) {
+          showToast("Không có dữ liệu để xuất!", "error");
+          return;
+        }
+
+        let csvContent =
+          "Căn hộ,Số công tơ,Chỉ số,Giờ,Đến ngày,Trạng thái,Ngày kiểm tra,Ghi chú\n";
+        filteredData.forEach((data) => {
+          csvContent += `${data.id},${data.soCongTo},${data.chiSo},${
+            data.gio
+          },${data.denNgay},${data.trangThai},${data.ngayKiemTra || ""},${
+            data.ghiChu || ""
+          }\n`;
+        });
+
+        // Thêm BOM cho UTF-8 để hỗ trợ tiếng Việt trong Excel
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "dulieu_dongho.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+
+        showToast("Đã xuất dữ liệu thành công!");
+      }
+
+      // Hàm lọc dữ liệu theo tầng, căn, trạng thái, có ghi chú và ngày kiểm tra
+      // Thêm tham số resetPage để quyết định có reset trang không
+      function filterData(resetPage = false) {
+        const searchTang = document
+          .getElementById("searchTang")
+          .value.toLowerCase();
+        const searchCan = document
+          .getElementById("searchCan")
+          .value.toLowerCase();
+        const searchTrangThai =
+          document.getElementById("searchTrangThai").value;
+        const searchCoGhiChu = document.getElementById("searchCoGhiChu").value;
+        const searchNgayKiemTra = document
+          .getElementById("searchNgayKiemTra")
+          .value.toLowerCase();
+
+        // Lọc dữ liệu dựa trên các điều kiện tìm kiếm
+        filteredData = allData.filter((data) => {
+          const matchTang =
+            !searchTang || data.tang.toLowerCase().includes(searchTang);
+          const matchCan =
+            !searchCan || data.can.toLowerCase().includes(searchCan);
+          const matchTrangThai =
+            !searchTrangThai || data.trangThai === searchTrangThai;
+
+          // Lọc theo có ghi chú
+          let matchCoGhiChu = true;
+          if (searchCoGhiChu === "co") {
+            matchCoGhiChu = data.ghiChu && data.ghiChu.trim() !== "";
+          } else if (searchCoGhiChu === "khong") {
+            matchCoGhiChu = !data.ghiChu || data.ghiChu.trim() === "";
+          }
+
+          // Lọc theo ngày kiểm tra
+          const matchNgayKiemTra =
+            !searchNgayKiemTra ||
+            (data.ngayKiemTra &&
+              data.ngayKiemTra.toLowerCase().includes(searchNgayKiemTra));
+
+          return (
+            matchTang &&
+            matchCan &&
+            matchTrangThai &&
+            matchCoGhiChu &&
+            matchNgayKiemTra
+          );
+        });
+
+        // Chỉ reset trang nếu là thay đổi bộ lọc (không phải update realtime)
+        if (resetPage) {
+          currentPage = 1;
+        }
+
+        renderTable();
+        updateStatistics();
+      }
+
+      // Hàm đặt lại tìm kiếm
+      function resetSearch() {
+        document.getElementById("searchTang").value = "";
+        document.getElementById("searchCan").value = "";
+        document.getElementById("searchTrangThai").value = "";
+        document.getElementById("searchCoGhiChu").value = "";
+        document.getElementById("searchNgayKiemTra").value = "";
+        filterData(true);
+      }
+
+      // Hàm cập nhật thống kê
+      function updateStatistics() {
+        const total = filteredData.length;
+        const checked = filteredData.filter(
+          (item) => item.trangThai === "đã kiểm tra"
+        ).length;
+        const unchecked = filteredData.filter(
+          (item) => item.trangThai === "chưa kiểm tra"
+        ).length;
+        const absent = filteredData.filter(
+          (item) => item.trangThai === "vắng nhà"
+        ).length;
+
+        // Cập nhật số liệu thống kê lên giao diện
+        document.getElementById("totalCount").textContent = total;
+        document.getElementById("checkedCount").textContent = checked;
+        document.getElementById("uncheckedCount").textContent = unchecked;
+        document.getElementById("absentCount").textContent = absent;
+      }
+
+      // Hàm tải dữ liệu từ Firebase với realtime updates
+      function loadData() {
+        const spinner = document.getElementById("loadingSpinner");
+        spinner.style.display = "block";
+
+        db.ref("apartments").on(
+          "value",
+          (snapshot) => {
+            allData = [];
+            snapshot.forEach((child) => {
+              const data = child.val();
+              const canHo = child.key.replace("_", ".");
+              allData.push({
+                id: canHo,
+                ...data,
+                // Đảm bảo có các trường cần thiết
+                ghiChu: data.ghiChu || "",
+                ngayKiemTra: data.ngayKiemTra || "",
+                trangThai: data.trangThai || "chưa kiểm tra",
+              });
+            });
+
+            // Sắp xếp dữ liệu
+            sortData();
+
+            // Áp dụng bộ lọc hiện tại mà không reset trang
+            filterData(false);
+            spinner.style.display = "none";
+          },
+          (err) => {
+            showToast("Lỗi khi tải dữ liệu: " + err.message, "error");
+            spinner.style.display = "none";
+          }
+        );
+      }
+
+      // Hàm sắp xếp dữ liệu
+      function sortData() {
+        allData.sort((a, b) => {
+          let valA = a[sortColumn];
+          let valB = b[sortColumn];
+
+          // Xử lý số cho chiSo
+          if (sortColumn === "chiSo") {
+            valA = parseFloat(valA) || 0;
+            valB = parseFloat(valB) || 0;
+          }
+
+          // Xử lý string
+          if (typeof valA === "string") {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+          }
+
+          if (valA < valB) {
+            return sortDirection === "asc" ? -1 : 1;
+          }
+          if (valA > valB) {
+            return sortDirection === "asc" ? 1 : -1;
+          }
+          return 0;
+        });
+      }
+
+      // Hàm xử lý click sort
+      function sortBy(column) {
+        if (sortColumn === column) {
+          // Đổi hướng nếu cùng cột
+          sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          // Cột mới, mặc định asc
+          sortColumn = column;
+          sortDirection = "asc";
+        }
+
+        // Cập nhật arrow trên header
+        document.querySelectorAll("th").forEach((th) => {
+          th.classList.remove("sort-asc", "sort-desc");
+        });
+        const header = document.getElementById(`header_${column}`);
+        if (header) {
+          header.classList.add(`sort-${sortDirection}`);
+        }
+
+        // Sắp xếp và render lại
+        sortData();
+        filterData(false);
+      }
+
+      // Hàm tự động lưu ghi chú với debounce
+      let saveTimeouts = {};
+      function autoSaveGhiChu(id) {
+        // Hiển thị indicator để người dùng biết đang lưu
+        const desktopIndicator = document.getElementById(`saveIndicator_${id}`);
+        const mobileIndicator = document.getElementById(
+          `mobile_saveIndicator_${id}`
+        );
+        if (desktopIndicator) desktopIndicator.style.display = "inline";
+        if (mobileIndicator) mobileIndicator.style.display = "inline";
+
+        // Clear timeout cũ nếu có
+        if (saveTimeouts[id]) clearTimeout(saveTimeouts[id]);
+
+        // Set timeout mới - lưu sau 1.5 giây không gõ
+        saveTimeouts[id] = setTimeout(() => {
+          saveGhiChu(id);
+        }, 1500);
+      }
+
+      // Hàm lấy giá trị ghi chú (hỗ trợ cả desktop và mobile)
+      function getGhiChuValue(id) {
+        // Thử lấy từ mobile trước (vì trên mobile, desktop bị ẩn)
+        const mobileInput = document.getElementById(`mobile_ghiChu_${id}`);
+        if (mobileInput && mobileInput.offsetParent !== null) {
+          return mobileInput.value;
+        }
+
+        // Nếu không có mobile, lấy từ desktop
+        const desktopInput = document.getElementById(`ghiChu_${id}`);
+        return desktopInput ? desktopInput.value : "";
+      }
+
+      // Hàm lưu ghi chú lên Firebase
+      function saveGhiChu(id) {
+        const ghiChu = getGhiChuValue(id);
+
+        db.ref(`apartments/${id.replace(".", "_")}`)
+          .update({
+            ghiChu: ghiChu,
+            lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+          })
+          .then(() => {
+            // Ẩn indicator sau khi lưu thành công
+            const desktopIndicator = document.getElementById(
+              `saveIndicator_${id}`
+            );
+            const mobileIndicator = document.getElementById(
+              `mobile_saveIndicator_${id}`
+            );
+            if (desktopIndicator) desktopIndicator.style.display = "none";
+            if (mobileIndicator) mobileIndicator.style.display = "none";
+
+            showToast(`Đã lưu ghi chú cho ${id}`);
+
+            // Cập nhật dữ liệu local để đồng bộ
+            const itemIndex = allData.findIndex((item) => item.id === id);
+            if (itemIndex !== -1) {
+              allData[itemIndex].ghiChu = ghiChu;
+            }
+          })
+          .catch((err) => {
+            showToast("Lỗi khi lưu ghi chú: " + err.message, "error");
+          });
+      }
+
+      // Hàm hiển thị bảng với phân trang
+      function renderTable() {
+        const tableBody = document.getElementById("tableBody");
+        const mobileCardView = document.getElementById("mobileCardView");
+        tableBody.innerHTML = "";
+        mobileCardView.innerHTML = "";
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedData = filteredData.slice(start, end);
+
+        // Hiển thị thông báo nếu không có dữ liệu
+        if (paginatedData.length === 0) {
+          const emptyRow = document.createElement("tr");
+          emptyRow.innerHTML = `<td colspan="9" class="text-center py-4 text-gray-500">Không có dữ liệu</td>`;
+          tableBody.appendChild(emptyRow);
+
+          const emptyCard = document.createElement("div");
+          emptyCard.className = "card text-center py-4 text-gray-500";
+          emptyCard.textContent = "Không có dữ liệu";
+          mobileCardView.appendChild(emptyCard);
+        }
+
+        // Render desktop table
+        paginatedData.forEach((data) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-4 py-2 whitespace-nowrap font-medium">${data.id}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.soCongTo}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.chiSo}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.gio}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.denNgay}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span class="status-badge status-${data.trangThai.replace(
+                /\s+/g,
+                "-"
+              )}">
+                ${data.trangThai}
+              </span>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">${
+              data.ngayKiemTra || ""
+            }</td>
+            <td class="px-4 py-2">
+              <div class="ghi-chu-container">
+                <input type="text" id="ghiChu_${data.id}" value="${
+            data.ghiChu || ""
+          }" 
+                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
+                       oninput="autoSaveGhiChu('${data.id}')"
+                       placeholder="Nhập ghi chú...">
+                <button onclick="saveGhiChu('${
+                  data.id
+                }')" class="save-button min-h-[44px]">💾</button>
+                <span id="saveIndicator_${
+                  data.id
+                }" class="auto-save-indicator">✓</span>
+              </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <div class="flex flex-col gap-1">
+                <button onclick="prepareUpdateStatus('${
+                  data.id
+                }', 'đã kiểm tra')" 
+                        class="btn btn-success text-sm min-h-[44px]">
+                  ✅ Đã kiểm tra
+                </button>
+                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
+                        class="btn btn-warning text-sm min-h-[44px]">
+                  🏠 Vắng nhà
+                </button>
+                ${
+                  data.trangThai !== "chưa kiểm tra"
+                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
+                          class="btn btn-primary text-sm min-h-[44px]">
+                    ⏳ Chưa kiểm tra
+                  </button>`
+                    : ""
+                }
+              </div>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        // Render mobile cards - đã cải tiến để hiển thị thêm cột "Đến ngày" và "Ngày kiểm tra"
+        paginatedData.forEach((data) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <div class="card-row">
+              <span class="card-label">Căn hộ:</span>
+              <span class="font-medium">${data.id}</span>
+            </div>
+            
+            <!-- Hiển thị thông tin dạng grid cho mobile -->
+            <div class="mobile-info-grid">
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Số công tơ</span>
+                <span class="mobile-info-value">${data.soCongTo}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Chỉ số</span>
+                <span class="mobile-info-value">${data.chiSo}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Giờ</span>
+                <span class="mobile-info-value">${data.gio}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Đến ngày</span>
+                <span class="mobile-info-value">${data.denNgay}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Ngày kiểm tra</span>
+                <span class="mobile-info-value">${data.ngayKiemTra || ""}</span>
+              </div>
+            </div>
+            
+            <div class="card-row">
+              <span class="card-label">Trạng thái:</span>
+              <span class="status-badge status-${data.trangThai.replace(
+                /\s+/g,
+                "-"
+              )}">
+                ${data.trangThai}
+              </span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Ghi chú:</span>
+              <div class="ghi-chu-container">
+                <input type="text" id="mobile_ghiChu_${data.id}" value="${
+            data.ghiChu || ""
+          }" 
+                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
+                       oninput="autoSaveGhiChu('${data.id}')"
+                       placeholder="Nhập ghi chú...">
+                <button onclick="saveGhiChu('${
+                  data.id
+                }')" class="save-button min-h-[44px]">💾</button>
+                <span id="mobile_saveIndicator_${
+                  data.id
+                }" class="auto-save-indicator">✓</span>
+              </div>
+            </div>
+            <div class="card-row mt-3">
+              <div class="flex flex-col gap-2 w-full">
+                <button onclick="prepareUpdateStatus('${
+                  data.id
+                }', 'đã kiểm tra')" 
+                        class="btn btn-success text-sm min-h-[44px] w-full">
+                  ✅ Đã kiểm tra
+                </button>
+                <button onclick="viewImages('${data.id}')"
+        class="btn btn-primary text-sm min-h-[44px]">
+  🖼️ Xem ảnh
+</button>
+
+                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
+                        class="btn btn-warning text-sm min-h-[44px] w-full">
+                  🏠 Vắng nhà
+                </button>
+                ${
+                  data.trangThai !== "chưa kiểm tra"
+                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
+                          class="btn btn-primary text-sm min-h-[44px] w-full">
+                    ⏳ Chưa kiểm tra
+                  </button>`
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+          mobileCardView.appendChild(card);
+        });
+
+        // Cập nhật thông tin phân trang
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        // Điều chỉnh currentPage nếu vượt quá totalPages sau lọc
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+        }
+        document.getElementById(
+          "pageInfo"
+        ).textContent = `Trang ${currentPage} / ${totalPages} (${filteredData.length} kết quả)`;
+        document.getElementById("prevBtn").disabled = currentPage === 1;
+        document.getElementById("nextBtn").disabled =
+          currentPage === totalPages || totalPages === 0;
+
+        // Cập nhật thống kê
+        updateStatistics();
+      }
+
+      // Hàm chuẩn bị cập nhật trạng thái (hiển thị modal xác nhận)
+      function prepareUpdateStatus(id, newStatus) {
+        const statusText = {
+          "đã kiểm tra": "đã kiểm tra",
+          "chưa kiểm tra": "chưa kiểm tra",
+          "vắng nhà": "vắng nhà",
+        }[newStatus];
+
+        showModal(
+          "Xác nhận thay đổi trạng thái",
+          `Bạn có chắc chắn muốn đánh dấu căn hộ ${id} là "${statusText}" không?`,
+          () => updateStatus(id, newStatus)
+        );
+      }
+
+      // Hàm cập nhật trạng thái lên Firebase, thêm ngày kiểm tra nếu là đã kiểm tra hoặc vắng nhà
+      function updateStatus(id, newStatus) {
+        const ghiChu = getGhiChuValue(id);
+        const updateData = {
+          trangThai: newStatus,
+          ghiChu: ghiChu,
+          lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+        };
+
+        // Thêm ngày kiểm tra nếu trạng thái là "đã kiểm tra" hoặc "vắng nhà"
+        if (newStatus === "đã kiểm tra" || newStatus === "vắng nhà") {
+          const today = new Date();
+          const day = String(today.getDate()).padStart(2, "0");
+          const month = String(today.getMonth() + 1).padStart(2, "0");
+          updateData.ngayKiemTra = `${day}/${month}`;
+        } else {
+          // Nếu reset về "chưa kiểm tra", xóa ngày kiểm tra
+          updateData.ngayKiemTra = "";
+        }
+
+        db.ref(`apartments/${id.replace(".", "_")}`)
+          .update(updateData)
+          .then(() => {
+            showToast(`Đã cập nhật ${id} thành "${newStatus}"`);
+          })
+          .catch((err) => {
+            showToast("Lỗi khi cập nhật: " + err.message, "error");
+          });
+      }
+
+      // Hàm phân trang
+      function prevPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTable();
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTable();
+        }
+      }
+
+      function viewImages(apartmentId) {
+        const baseUrl = "https://hieu081.github.io/KTRADong-Ho/images/";
+        const urls = [
+          `${baseUrl}${apartmentId}-1.jpg`,
+          `${baseUrl}${apartmentId}-2.jpg`,
+        ];
+
+        let html = "";
+        urls.forEach((url) => {
+          html += `<img src="${url}" style="max-width:100%; margin:10px 0;" 
+              onerror="this.style.display='none'">`;
+        });
+
+        const modalHtml = `
+    <div id="imgModal" style="position:fixed; top:0; left:0; width:100%; height:100%;
+         background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;">
+      <div style="background:white; padding:20px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto;">
+        ${html}
+        <div style="text-align:right; margin-top:10px;">
+          <button onclick="closeImgModal()" 
+                  style="padding:6px 12px; background:red; color:white; border:none; border-radius:4px;">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+      }
+
+      function closeImgModal() {
+        const modal = document.getElementById("imgModal");
+        if (modal) modal.remove();
+      }
+
+      // Load dữ liệu ban đầu khi trang được tải
+      loadData();
+
+      // Thêm sự kiện Enter để lưu nhanh ghi chú
+      document.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          const activeElement = document.activeElement;
+          if (
+            activeElement &&
+            activeElement.classList.contains("ghi-chu-input")
+          ) {
+            const id = activeElement.id
+              .replace("ghiChu_", "")
+              .replace("mobile_ghiChu_", "");
+            saveGhiChu(id);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
