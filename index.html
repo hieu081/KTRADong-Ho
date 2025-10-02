@@ -607,8 +607,7 @@
         }
         closeModal();
       }
-
-      async function uploadCSV() {
+      function uploadCSV() {
         const fileInput = document.getElementById("csvFile");
         const spinner = document.getElementById("loadingSpinner");
         const file = fileInput.files[0];
@@ -621,77 +620,52 @@
         spinner.style.display = "block";
         const reader = new FileReader();
 
-        reader.onload = async function (e) {
+        reader.onload = function (e) {
           try {
             const csv = e.target.result;
             const lines = csv.split("\n").slice(1);
-            const newApartments = [];
+            const batchUpdates = {};
 
             lines.forEach((line) => {
               if (line.trim()) {
                 const [canHo, soCongTo, chiSo, gio, denNgay] = line.split(",");
                 if (canHo && canHo.trim()) {
                   const { tang, can } = parseCanHo(canHo.trim());
+
                   const key = canHo.replace(".", "_");
-                  newApartments.push({
-                    key,
-                    data: {
-                      soCongTo: soCongTo || "NULL",
-                      chiSo: parseFloat(chiSo) || 0,
-                      gio: gio || "",
-                      denNgay: denNgay || "",
-                      tang,
-                      can,
-                    },
-                  });
+
+                  batchUpdates[`apartments/${key}/soCongTo`] =
+                    soCongTo || "NULL";
+                  batchUpdates[`apartments/${key}/chiSo`] =
+                    parseFloat(chiSo) || 0;
+                  batchUpdates[`apartments/${key}/gio`] = gio || "";
+                  batchUpdates[`apartments/${key}/denNgay`] = denNgay || "";
+                  batchUpdates[`apartments/${key}/tang`] = tang;
+                  batchUpdates[`apartments/${key}/can`] = can;
+                  batchUpdates[`apartments/${key}/lastUpdated`] =
+                    firebase.database.ServerValue.TIMESTAMP;
                 }
               }
             });
 
-            let countUpdated = 0;
-            for (const { key, data } of newApartments) {
-              const snap = await db.ref(`apartments/${key}`).once("value");
-              const current = snap.val();
-              let needsUpdate = false;
-
-              if (!current) {
-                needsUpdate = true;
-              } else {
-                if (
-                  data.soCongTo !== current.soCongTo ||
-                  data.chiSo !== current.chiSo ||
-                  data.gio !== current.gio ||
-                  data.denNgay !== current.denNgay ||
-                  data.tang !== current.tang ||
-                  data.can !== current.can
-                ) {
-                  needsUpdate = true;
-                }
-              }
-
-              if (needsUpdate) {
-                const updateData = { ...data };
-                if (current) {
-                  updateData.trangThai = current.trangThai;
-                  updateData.ghiChu = current.ghiChu;
-                  updateData.ngayKiemTra = current.ngayKiemTra;
-                } else {
-                  updateData.trangThai = "chưa kiểm tra";
-                  updateData.ghiChu = "";
-                }
-                updateData.lastUpdated =
-                  firebase.database.ServerValue.TIMESTAMP;
-                await db.ref(`apartments/${key}`).set(updateData);
-                countUpdated++;
-              }
-            }
-
-            showToast(`Đã cập nhật ${countUpdated} căn hộ thành công!`);
-            fileInput.value = "";
+            db.ref()
+              .update(batchUpdates)
+              .then(() => {
+                showToast(
+                  `Đã cập nhật ${
+                    lines.filter((line) => line.trim()).length
+                  } căn hộ thành công!`
+                );
+                fileInput.value = "";
+              })
+              .catch((err) => {
+                console.error("Lỗi Firebase:", err);
+                showToast("Lỗi khi lưu dữ liệu: " + err.message, "error");
+              })
+              .finally(() => (spinner.style.display = "none"));
           } catch (error) {
             console.error("Lỗi xử lý CSV:", error);
             showToast("Lỗi khi xử lý file CSV: " + error.message, "error");
-          } finally {
             spinner.style.display = "none";
           }
         };
