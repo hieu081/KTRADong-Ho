@@ -32,7 +32,6 @@
         }
       }
 
-      /* Responsive table - Hiển thị table trên PC */
       @media (min-width: 769px) {
         .table-desktop {
           display: block;
@@ -42,7 +41,6 @@
         }
       }
 
-      /* Ẩn table và hiển thị card trên mobile */
       @media (max-width: 768px) {
         .table-desktop {
           display: none;
@@ -51,6 +49,9 @@
           display: block;
         }
         .hidden-mobile-info {
+          display: none !important;
+        }
+        #uploadSection {
           display: none !important;
         }
       }
@@ -68,7 +69,7 @@
         justify-content: space-between;
         margin-bottom: 0.5rem;
         align-items: center;
-        flex-wrap: wrap; /* Thêm wrap để tránh tràn */
+        flex-wrap: wrap;
       }
       .card-label {
         font-weight: bold;
@@ -77,7 +78,6 @@
         flex-shrink: 0;
       }
 
-      /* Status badges */
       .status-badge {
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
@@ -97,7 +97,6 @@
         color: #3730a3;
       }
 
-      /* Auto-save indicator */
       .auto-save-indicator {
         font-size: 0.75rem;
         color: #10b981;
@@ -105,7 +104,6 @@
         display: none;
       }
 
-      /* Modal styles */
       .modal {
         display: none;
         position: fixed;
@@ -131,13 +129,12 @@
         margin-top: 20px;
       }
 
-      /* Ghi chú input container */
       .ghi-chu-container {
         display: flex;
         align-items: center;
         gap: 8px;
         width: 100%;
-        flex-wrap: wrap; /* Thêm wrap để nút lưu không tràn */
+        flex-wrap: wrap;
       }
       .ghi-chu-input {
         flex: 1 1 auto;
@@ -158,7 +155,6 @@
         background-color: #2563eb;
       }
 
-      /* Button styles */
       .btn {
         padding: 8px 16px;
         border-radius: 4px;
@@ -196,13 +192,11 @@
         background-color: #dc2626;
       }
 
-      /* Search highlight */
       .highlight {
         background-color: #ffeb3b;
         font-weight: bold;
       }
 
-      /* Mobile-specific styles */
       .mobile-info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -223,7 +217,6 @@
         font-weight: 500;
       }
 
-      /* Sort arrow */
       .sort-arrow {
         margin-left: 4px;
         display: inline-block;
@@ -239,13 +232,12 @@
         border-top: 5px solid #000;
       }
 
-      /* Tối ưu cho mobile nhỏ (375px) */
       @media (max-width: 375px) {
         .container {
           padding: 0.5rem;
         }
         .btn {
-          padding: 10px 12px; /* Tăng padding cho dễ chạm */
+          padding: 10px 12px;
           font-size: 0.875rem;
         }
         .ghi-chu-container {
@@ -258,7 +250,7 @@
           padding: 8px;
         }
         .mobile-info-grid {
-          grid-template-columns: 1fr; /* Chuyển sang 1 cột cho màn nhỏ */
+          grid-template-columns: 1fr;
         }
         .card-row {
           flex-direction: column;
@@ -279,7 +271,6 @@
         }
       }
 
-      /* Tối ưu thống kê cho mobile */
       @media (max-width: 640px) {
         .stats-grid {
           grid-template-columns: 1fr 1fr !important;
@@ -298,8 +289,11 @@
         Quản lý Kiểm tra Đồng hồ
       </h1>
 
-      <!-- Upload CSV -->
-      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+      <div
+        id="uploadSection"
+        class="bg-white p-4 rounded-lg shadow-md mb-4"
+        style="display: none"
+      >
         <h2 class="text-lg sm:text-xl font-semibold mb-3">Tải lên file CSV</h2>
         <div class="flex flex-col sm:flex-row gap-4 items-center">
           <input
@@ -324,7 +318,6 @@
         <div id="loadingSpinner" class="loading-spinner mt-4"></div>
       </div>
 
-      <!-- Tìm kiếm -->
       <div class="bg-white p-4 rounded-lg shadow-md mb-4">
         <h2 class="text-lg sm:text-xl font-semibold mb-3">🔍 Tìm kiếm</h2>
         <div class="flex flex-col sm:flex-row gap-4">
@@ -400,7 +393,6 @@
         </div>
       </div>
 
-      <!-- Thống kê -->
       <div class="bg-white p-4 rounded-lg shadow-md mb-4">
         <div
           class="stats-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
@@ -440,9 +432,7 @@
         </div>
       </div>
 
-      <!-- Bảng dữ liệu -->
       <div class="bg-white p-4 rounded-lg shadow-md">
-        <!-- Desktop Table - Hiển thị trên PC -->
         <div class="table-container table-desktop overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -515,10 +505,8 @@
           </table>
         </div>
 
-        <!-- Mobile Card View - Chỉ hiển thị trên mobile -->
         <div id="mobileCardView" class="mobile-card"></div>
 
-        <!-- Phân trang -->
         <div class="flex justify-between items-center mt-4 flex-wrap gap-2">
           <button
             onclick="prevPage()"
@@ -541,7 +529,6 @@
       </div>
     </div>
 
-    <!-- Modal xác nhận -->
     <div id="confirmModal" class="modal">
       <div class="modal-content">
         <h3 class="text-lg font-semibold mb-4" id="modalTitle">Xác nhận</h3>
@@ -562,7 +549,6 @@
     </div>
 
     <script>
-      // Firebase Config - kết nối với database
       const firebaseConfig = {
         apiKey: "AIzaSyDn7GLPt_K-7Os2olo6XgdS4_kTtPKn_ng",
         authDomain: "ktradong-ho.firebaseapp.com",
@@ -574,24 +560,19 @@
         measurementId: "G-6NZ03Z84KY",
       };
 
-      // Khởi tạo Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
 
-      // Biến toàn cục cho phân trang
       let currentPage = 1;
       const itemsPerPage = 10;
       let allData = [];
       let filteredData = [];
 
-      // Biến lưu trữ thông tin cho modal xác nhận
       let pendingAction = null;
 
-      // Biến cho sắp xếp
       let sortColumn = "id";
-      let sortDirection = "asc"; // 'asc' hoặc 'desc'
+      let sortDirection = "asc";
 
-      // Hàm parse mã căn hộ để tách tầng và căn
       function parseCanHo(maCanHo) {
         const match = maCanHo.match(/^P1\.(\d{2})(.*)$/);
         if (match) {
@@ -600,7 +581,6 @@
         return { tang: "Unknown", can: maCanHo };
       }
 
-      // Hàm hiển thị thông báo toast
       function showToast(message, type = "info") {
         Toastify({
           text: message,
@@ -612,7 +592,6 @@
         }).showToast();
       }
 
-      // Hàm hiển thị modal xác nhận
       function showModal(title, message, action) {
         document.getElementById("modalTitle").textContent = title;
         document.getElementById("modalMessage").textContent = message;
@@ -620,13 +599,11 @@
         pendingAction = action;
       }
 
-      // Hàm đóng modal
       function closeModal() {
         document.getElementById("confirmModal").style.display = "none";
         pendingAction = null;
       }
 
-      // Hàm xác nhận hành động từ modal
       function confirmAction() {
         if (pendingAction) {
           pendingAction();
@@ -634,13 +611,11 @@
         closeModal();
       }
 
-      // Hàm tải lên CSV và lưu vào Realtime Database
-      function uploadCSV() {
+      async function uploadCSV() {
         const fileInput = document.getElementById("csvFile");
         const spinner = document.getElementById("loadingSpinner");
         const file = fileInput.files[0];
 
-        // Kiểm tra xem đã chọn file chưa
         if (!file) {
           showToast("Vui lòng chọn file CSV!", "error");
           return;
@@ -649,53 +624,75 @@
         spinner.style.display = "block";
         const reader = new FileReader();
 
-        reader.onload = function (e) {
+        reader.onload = async function (e) {
           try {
             const csv = e.target.result;
-            const lines = csv.split("\n").slice(1); // Bỏ header
-            const updates = {};
+            const lines = csv.split("\n").slice(1);
+            const newApartments = [];
 
-            // Xử lý từng dòng trong file CSV
             lines.forEach((line) => {
               if (line.trim()) {
                 const [canHo, soCongTo, chiSo, gio, denNgay] = line.split(",");
                 if (canHo && canHo.trim()) {
                   const { tang, can } = parseCanHo(canHo.trim());
-                  // Tạo key cho Firebase (thay . bằng _)
                   const key = canHo.replace(".", "_");
-                  updates[`apartments/${key}`] = {
-                    soCongTo: soCongTo || "NULL",
-                    chiSo: parseFloat(chiSo) || 0,
-                    gio: gio || "",
-                    denNgay: denNgay || "",
-                    tang: tang,
-                    can: can,
-                    trangThai: "chưa kiểm tra",
-                    ghiChu: "",
-                    ngayKiemTra: "",
-                    lastUpdated: firebase.database.ServerValue.TIMESTAMP,
-                  };
+                  newApartments.push({
+                    key,
+                    data: {
+                      soCongTo: soCongTo || "NULL",
+                      chiSo: parseFloat(chiSo) || 0,
+                      gio: gio || "",
+                      denNgay: denNgay || "",
+                      tang,
+                      can,
+                    },
+                  });
                 }
               }
             });
 
-            // Cập nhật dữ liệu lên Firebase
-            db.ref()
-              .update(updates)
-              .then(() => {
-                showToast(
-                  `Đã lưu ${Object.keys(updates).length} căn hộ thành công!`
-                );
-                fileInput.value = ""; // Reset file input
-              })
-              .catch((err) => {
-                console.error("Lỗi Firebase:", err);
-                showToast("Lỗi khi lưu dữ liệu: " + err.message, "error");
-              })
-              .finally(() => (spinner.style.display = "none"));
+            let countUpdated = 0;
+            for (const { key, data } of newApartments) {
+              const snap = await db.ref(`apartments/${key}`).once("value");
+              const current = snap.val();
+              let needsUpdate = false;
+
+              if (!current) {
+                needsUpdate = true;
+              } else {
+                if (
+                  data.soCongTo !== current.soCongTo ||
+                  data.chiSo !== current.chiSo ||
+                  data.gio !== current.gio ||
+                  data.denNgay !== current.denNgay
+                ) {
+                  needsUpdate = true;
+                }
+              }
+
+              if (needsUpdate) {
+                const updateData = { ...data };
+                if (current) {
+                  updateData.trangThai = current.trangThai;
+                  updateData.ghiChu = current.ghiChu;
+                  updateData.ngayKiemTra = current.ngayKiemTra;
+                } else {
+                  updateData.trangThai = "chưa kiểm tra";
+                  updateData.ghiChu = "";
+                }
+                updateData.lastUpdated =
+                  firebase.database.ServerValue.TIMESTAMP;
+                await db.ref(`apartments/${key}`).set(updateData);
+                countUpdated++;
+              }
+            }
+
+            showToast(`Đã cập nhật ${countUpdated} căn hộ thành công!`);
+            fileInput.value = "";
           } catch (error) {
             console.error("Lỗi xử lý CSV:", error);
             showToast("Lỗi khi xử lý file CSV: " + error.message, "error");
+          } finally {
             spinner.style.display = "none";
           }
         };
@@ -708,7 +705,6 @@
         reader.readAsText(file, "UTF-8");
       }
 
-      // Hàm xuất dữ liệu ra CSV với hỗ trợ UTF-8 (thêm BOM cho tiếng Việt)
       function exportToCSV() {
         if (filteredData.length === 0) {
           showToast("Không có dữ liệu để xuất!", "error");
@@ -725,7 +721,6 @@
           }\n`;
         });
 
-        // Thêm BOM cho UTF-8 để hỗ trợ tiếng Việt trong Excel
         const bom = "\uFEFF";
         const blob = new Blob([bom + csvContent], {
           type: "text/csv;charset=utf-8;",
@@ -740,8 +735,6 @@
         showToast("Đã xuất dữ liệu thành công!");
       }
 
-      // Hàm lọc dữ liệu theo tầng, căn, trạng thái, có ghi chú và ngày kiểm tra
-      // Thêm tham số resetPage để quyết định có reset trang không
       function filterData(resetPage = false) {
         const searchTang = document
           .getElementById("searchTang")
@@ -756,7 +749,6 @@
           .getElementById("searchNgayKiemTra")
           .value.toLowerCase();
 
-        // Lọc dữ liệu dựa trên các điều kiện tìm kiếm
         filteredData = allData.filter((data) => {
           const matchTang =
             !searchTang || data.tang.toLowerCase().includes(searchTang);
@@ -765,7 +757,6 @@
           const matchTrangThai =
             !searchTrangThai || data.trangThai === searchTrangThai;
 
-          // Lọc theo có ghi chú
           let matchCoGhiChu = true;
           if (searchCoGhiChu === "co") {
             matchCoGhiChu = data.ghiChu && data.ghiChu.trim() !== "";
@@ -773,7 +764,6 @@
             matchCoGhiChu = !data.ghiChu || data.ghiChu.trim() === "";
           }
 
-          // Lọc theo ngày kiểm tra
           const matchNgayKiemTra =
             !searchNgayKiemTra ||
             (data.ngayKiemTra &&
@@ -788,7 +778,6 @@
           );
         });
 
-        // Chỉ reset trang nếu là thay đổi bộ lọc (không phải update realtime)
         if (resetPage) {
           currentPage = 1;
         }
@@ -797,7 +786,6 @@
         updateStatistics();
       }
 
-      // Hàm đặt lại tìm kiếm
       function resetSearch() {
         document.getElementById("searchTang").value = "";
         document.getElementById("searchCan").value = "";
@@ -807,7 +795,6 @@
         filterData(true);
       }
 
-      // Hàm cập nhật thống kê
       function updateStatistics() {
         const total = filteredData.length;
         const checked = filteredData.filter(
@@ -820,14 +807,12 @@
           (item) => item.trangThai === "vắng nhà"
         ).length;
 
-        // Cập nhật số liệu thống kê lên giao diện
         document.getElementById("totalCount").textContent = total;
         document.getElementById("checkedCount").textContent = checked;
         document.getElementById("uncheckedCount").textContent = unchecked;
         document.getElementById("absentCount").textContent = absent;
       }
 
-      // Hàm tải dữ liệu từ Firebase với realtime updates
       function loadData() {
         const spinner = document.getElementById("loadingSpinner");
         spinner.style.display = "block";
@@ -842,19 +827,20 @@
               allData.push({
                 id: canHo,
                 ...data,
-                // Đảm bảo có các trường cần thiết
                 ghiChu: data.ghiChu || "",
                 ngayKiemTra: data.ngayKiemTra || "",
                 trangThai: data.trangThai || "chưa kiểm tra",
               });
             });
 
-            // Sắp xếp dữ liệu
-            sortData();
-
-            // Áp dụng bộ lọc hiện tại mà không reset trang
-            filterData(false);
-            spinner.style.display = "none";
+            const imageChecks = allData.map((data) =>
+              checkHasImage(data.id).then((has) => (data.hasImage = has))
+            );
+            Promise.all(imageChecks).then(() => {
+              sortData();
+              filterData(false);
+              spinner.style.display = "none";
+            });
           },
           (err) => {
             showToast("Lỗi khi tải dữ liệu: " + err.message, "error");
@@ -863,19 +849,22 @@
         );
       }
 
-      // Hàm sắp xếp dữ liệu
+      db.ref("config/taifile").on("value", (snap) => {
+        const val = snap.val();
+        const uploadSection = document.getElementById("uploadSection");
+        uploadSection.style.display = val === 1 ? "block" : "none";
+      });
+
       function sortData() {
         allData.sort((a, b) => {
           let valA = a[sortColumn];
           let valB = b[sortColumn];
 
-          // Xử lý số cho chiSo
           if (sortColumn === "chiSo") {
             valA = parseFloat(valA) || 0;
             valB = parseFloat(valB) || 0;
           }
 
-          // Xử lý string
           if (typeof valA === "string") {
             valA = valA.toLowerCase();
             valB = valB.toLowerCase();
@@ -891,18 +880,14 @@
         });
       }
 
-      // Hàm xử lý click sort
       function sortBy(column) {
         if (sortColumn === column) {
-          // Đổi hướng nếu cùng cột
           sortDirection = sortDirection === "asc" ? "desc" : "asc";
         } else {
-          // Cột mới, mặc định asc
           sortColumn = column;
           sortDirection = "asc";
         }
 
-        // Cập nhật arrow trên header
         document.querySelectorAll("th").forEach((th) => {
           th.classList.remove("sort-asc", "sort-desc");
         });
@@ -911,15 +896,12 @@
           header.classList.add(`sort-${sortDirection}`);
         }
 
-        // Sắp xếp và render lại
         sortData();
         filterData(false);
       }
 
-      // Hàm tự động lưu ghi chú với debounce
       let saveTimeouts = {};
       function autoSaveGhiChu(id) {
-        // Hiển thị indicator để người dùng biết đang lưu
         const desktopIndicator = document.getElementById(`saveIndicator_${id}`);
         const mobileIndicator = document.getElementById(
           `mobile_saveIndicator_${id}`
@@ -927,29 +909,23 @@
         if (desktopIndicator) desktopIndicator.style.display = "inline";
         if (mobileIndicator) mobileIndicator.style.display = "inline";
 
-        // Clear timeout cũ nếu có
         if (saveTimeouts[id]) clearTimeout(saveTimeouts[id]);
 
-        // Set timeout mới - lưu sau 1.5 giây không gõ
         saveTimeouts[id] = setTimeout(() => {
           saveGhiChu(id);
         }, 1500);
       }
 
-      // Hàm lấy giá trị ghi chú (hỗ trợ cả desktop và mobile)
       function getGhiChuValue(id) {
-        // Thử lấy từ mobile trước (vì trên mobile, desktop bị ẩn)
         const mobileInput = document.getElementById(`mobile_ghiChu_${id}`);
         if (mobileInput && mobileInput.offsetParent !== null) {
           return mobileInput.value;
         }
 
-        // Nếu không có mobile, lấy từ desktop
         const desktopInput = document.getElementById(`ghiChu_${id}`);
         return desktopInput ? desktopInput.value : "";
       }
 
-      // Hàm lưu ghi chú lên Firebase
       function saveGhiChu(id) {
         const ghiChu = getGhiChuValue(id);
 
@@ -959,7 +935,6 @@
             lastUpdated: firebase.database.ServerValue.TIMESTAMP,
           })
           .then(() => {
-            // Ẩn indicator sau khi lưu thành công
             const desktopIndicator = document.getElementById(
               `saveIndicator_${id}`
             );
@@ -971,7 +946,6 @@
 
             showToast(`Đã lưu ghi chú cho ${id}`);
 
-            // Cập nhật dữ liệu local để đồng bộ
             const itemIndex = allData.findIndex((item) => item.id === id);
             if (itemIndex !== -1) {
               allData[itemIndex].ghiChu = ghiChu;
@@ -982,7 +956,6 @@
           });
       }
 
-      // Hàm hiển thị bảng với phân trang
       function renderTable() {
         const tableBody = document.getElementById("tableBody");
         const mobileCardView = document.getElementById("mobileCardView");
@@ -993,7 +966,6 @@
         const end = start + itemsPerPage;
         const paginatedData = filteredData.slice(start, end);
 
-        // Hiển thị thông báo nếu không có dữ liệu
         if (paginatedData.length === 0) {
           const emptyRow = document.createElement("tr");
           emptyRow.innerHTML = `<td colspan="9" class="text-center py-4 text-gray-500">Không có dữ liệu</td>`;
@@ -1005,7 +977,6 @@
           mobileCardView.appendChild(emptyCard);
         }
 
-        // Render desktop table
         paginatedData.forEach((data) => {
           const row = document.createElement("tr");
           row.innerHTML = `
@@ -1061,13 +1032,20 @@
                   </button>`
                     : ""
                 }
+                ${
+                  data.hasImage
+                    ? `<button onclick="viewImages('${data.id}')"
+                          class="btn btn-primary text-sm min-h-[44px]">
+                          🖼️ Xem ảnh
+                        </button>`
+                    : ""
+                }
               </div>
             </td>
           `;
           tableBody.appendChild(row);
         });
 
-        // Render mobile cards - đã cải tiến để hiển thị thêm cột "Đến ngày" và "Ngày kiểm tra"
         paginatedData.forEach((data) => {
           const card = document.createElement("div");
           card.className = "card";
@@ -1077,7 +1055,6 @@
               <span class="font-medium">${data.id}</span>
             </div>
             
-            <!-- Hiển thị thông tin dạng grid cho mobile -->
             <div class="mobile-info-grid">
               <div class="mobile-info-item">
                 <span class="mobile-info-label">Số công tơ</span>
@@ -1135,11 +1112,6 @@
                         class="btn btn-success text-sm min-h-[44px] w-full">
                   ✅ Đã kiểm tra
                 </button>
-                <button onclick="viewImages('${data.id}')"
-        class="btn btn-primary text-sm min-h-[44px]">
-  🖼️ Xem ảnh
-</button>
-
                 <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
                         class="btn btn-warning text-sm min-h-[44px] w-full">
                   🏠 Vắng nhà
@@ -1152,15 +1124,21 @@
                   </button>`
                     : ""
                 }
+                ${
+                  data.hasImage
+                    ? `<button onclick="viewImages('${data.id}')"
+                          class="btn btn-primary text-sm min-h-[44px] w-full">
+                          🖼️ Xem ảnh
+                        </button>`
+                    : ""
+                }
               </div>
             </div>
           `;
           mobileCardView.appendChild(card);
         });
 
-        // Cập nhật thông tin phân trang
         const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-        // Điều chỉnh currentPage nếu vượt quá totalPages sau lọc
         if (currentPage > totalPages) {
           currentPage = totalPages;
         }
@@ -1171,11 +1149,9 @@
         document.getElementById("nextBtn").disabled =
           currentPage === totalPages || totalPages === 0;
 
-        // Cập nhật thống kê
         updateStatistics();
       }
 
-      // Hàm chuẩn bị cập nhật trạng thái (hiển thị modal xác nhận)
       function prepareUpdateStatus(id, newStatus) {
         const statusText = {
           "đã kiểm tra": "đã kiểm tra",
@@ -1190,7 +1166,6 @@
         );
       }
 
-      // Hàm cập nhật trạng thái lên Firebase, thêm ngày kiểm tra nếu là đã kiểm tra hoặc vắng nhà
       function updateStatus(id, newStatus) {
         const ghiChu = getGhiChuValue(id);
         const updateData = {
@@ -1199,14 +1174,12 @@
           lastUpdated: firebase.database.ServerValue.TIMESTAMP,
         };
 
-        // Thêm ngày kiểm tra nếu trạng thái là "đã kiểm tra" hoặc "vắng nhà"
         if (newStatus === "đã kiểm tra" || newStatus === "vắng nhà") {
           const today = new Date();
           const day = String(today.getDate()).padStart(2, "0");
           const month = String(today.getMonth() + 1).padStart(2, "0");
           updateData.ngayKiemTra = `${day}/${month}`;
         } else {
-          // Nếu reset về "chưa kiểm tra", xóa ngày kiểm tra
           updateData.ngayKiemTra = "";
         }
 
@@ -1220,7 +1193,6 @@
           });
       }
 
-      // Hàm phân trang
       function prevPage() {
         if (currentPage > 1) {
           currentPage--;
@@ -1236,6 +1208,21 @@
         }
       }
 
+      function checkHasImage(id) {
+        const baseUrl = "https://hieu081.github.io/KTRADong-Ho/images/";
+        const urls = [`${baseUrl}${id}-1.jpg`, `${baseUrl}${id}-2.jpg`];
+        const promises = urls.map(
+          (url) =>
+            new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(true);
+              img.onerror = () => resolve(false);
+              img.src = url;
+            })
+        );
+        return Promise.all(promises).then((results) => results.some((r) => r));
+      }
+
       function viewImages(apartmentId) {
         const baseUrl = "https://hieu081.github.io/KTRADong-Ho/images/";
         const urls = [
@@ -1245,13 +1232,13 @@
 
         let html = "";
         urls.forEach((url) => {
-          html += `<img src="${url}" style="max-width:100%; margin:10px 0;" 
+          html += `<img src="${url}" style="width: 100%; max-width: 400px; height: auto; display: block; margin: 10px auto;" 
               onerror="this.style.display='none'">`;
         });
 
         const modalHtml = `
     <div id="imgModal" style="position:fixed; top:0; left:0; width:100%; height:100%;
-         background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;">
+         background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;" onclick="if(event.target.id === 'imgModal') closeImgModal()">
       <div style="background:white; padding:20px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto;">
         ${html}
         <div style="text-align:right; margin-top:10px;">
@@ -1271,10 +1258,8 @@
         if (modal) modal.remove();
       }
 
-      // Load dữ liệu ban đầu khi trang được tải
       loadData();
 
-      // Thêm sự kiện Enter để lưu nhanh ghi chú
       document.addEventListener("keypress", function (e) {
         if (e.key === "Enter") {
           const activeElement = document.activeElement;
