@@ -51,9 +51,6 @@
         .hidden-mobile-info {
           display: none !important;
         }
-        #uploadSection {
-          display: none !important;
-        }
       }
 
       .card {
@@ -664,7 +661,9 @@
                   data.soCongTo !== current.soCongTo ||
                   data.chiSo !== current.chiSo ||
                   data.gio !== current.gio ||
-                  data.denNgay !== current.denNgay
+                  data.denNgay !== current.denNgay ||
+                  data.tang !== current.tang ||
+                  data.can !== current.can
                 ) {
                   needsUpdate = true;
                 }
