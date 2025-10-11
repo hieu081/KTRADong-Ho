@@ -13,7 +13,7 @@
       href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
     />
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
+    <script src="firebaseConfig.js"></script>
     <style>
       .loading-spinner {
         border: 4px solid #f3f3f3;
@@ -660,20 +660,8 @@
     </div>
 
     <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDn7GLPt_K-7Os2olo6XgdS4_kTtPKn_ng",
-        authDomain: "ktradong-ho.firebaseapp.com",
-        databaseURL: "https://ktradong-ho-default-rtdb.firebaseio.com",
-        projectId: "ktradong-ho",
-        storageBucket: "ktradong-ho.firebasestorage.app",
-        messagingSenderId: "806158456825",
-        appId: "1:806158456825:web:2a0ee6650e055488cc8f28",
-        measurementId: "G-6NZ03Z84KY",
-      };
-
-      firebase.initializeApp(firebaseConfig);
+      const app = firebase.initializeApp(window.firebaseConfig);
       const db = firebase.database();
-
       let currentPage = 1;
       const itemsPerPage = 10;
       let allData = [];
@@ -1193,69 +1181,73 @@
           const row = document.createElement("tr");
           row.className = rowClass;
           row.innerHTML = `
-            <td class="px-4 py-2 whitespace-nowrap font-medium">${data.id}</td>
-            <td class="px-4 py-2 whitespace-nowrap">${data.soCongTo}</td>
-            <td class="px-4 py-2 whitespace-nowrap">${data.chiSo}</td>
-            <td class="px-4 py-2 whitespace-nowrap">${data.gio}</td>
-            <td class="px-4 py-2 whitespace-nowrap">${data.denNgay}</td>
-            <td class="px-4 py-2 whitespace-nowrap">
-              <span class="status-badge status-${data.trangThai.replace(
-                /\s+/g,
-                "-"
-              )}">
-                ${data.trangThai}
-              </span>
-            </td>
-            <td class="px-4 py-2 whitespace-nowrap">${
-              data.ngayKiemTra || ""
-            }</td>
-            <td class="px-4 py-2">
-              <div class="ghi-chu-container">
-                <input type="text" id="ghiChu_${data.id}" value="${
+                  <td class="px-4 py-2 whitespace-nowrap font-medium">${
+                    data.id
+                  }</td>
+                  <td class="px-4 py-2 whitespace-nowrap">${data.soCongTo}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">${data.chiSo}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">${data.gio}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">${data.denNgay}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">
+                    <span class="status-badge status-${data.trangThai.replace(
+                      /\s+/g,
+                      "-"
+                    )}">
+                      ${data.trangThai}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2 whitespace-nowrap">${
+                    data.ngayKiemTra || ""
+                  }</td>
+                  <td class="px-4 py-2">
+                    <div class="ghi-chu-container">
+                      <input type="text" id="ghiChu_${data.id}" value="${
             data.ghiChu || ""
-          }" 
-                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
-                       oninput="autoSaveGhiChu('${data.id}')"
-                       placeholder="Nhập ghi chú...">
-                <button onclick="saveGhiChu('${
-                  data.id
-                }')" class="save-button min-h-[44px]">💾</button>
-                <span id="saveIndicator_${
-                  data.id
-                }" class="auto-save-indicator">✓</span>
-              </div>
-            </td>
-            <td class="px-4 py-2 whitespace-nowrap">
-              <div class="flex flex-col gap-1">
-                <button onclick="prepareUpdateStatus('${
-                  data.id
-                }', 'đã kiểm tra')" 
-                        class="btn btn-success text-sm min-h-[44px]">
-                  ✅ Đã kiểm tra
-                </button>
-                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
-                        class="btn btn-warning text-sm min-h-[44px] hidden-when-checked">
-                  🏠 Vắng nhà
-                </button>
-                ${
-                  data.trangThai !== "chưa kiểm tra"
-                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
-                          class="btn btn-primary text-sm min-h-[44px]">
-                    ⏳ Chưa kiểm tra
-                  </button>`
-                    : ""
-                }
-                ${
-                  showImages && data.hasImage
-                    ? `<button onclick="viewImages('${data.id}')"
-                          class="btn btn-primary text-sm min-h-[44px]">
-                          🖼️ Xem ảnh
+          }"
+                             class="border p-1 rounded ghi-chu-input min-h-[44px]"
+                             oninput="autoSaveGhiChu('${data.id}')"
+                             placeholder="Nhập ghi chú...">
+                      <button onclick="saveGhiChu('${
+                        data.id
+                      }')" class="save-button min-h-[44px]">💾</button>
+                      <span id="saveIndicator_${
+                        data.id
+                      }" class="auto-save-indicator">✓</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-2 whitespace-nowrap">
+                    <div class="flex flex-col gap-1">
+                      <button onclick="prepareUpdateStatus('${
+                        data.id
+                      }', 'đã kiểm tra')"
+                              class="btn btn-success text-sm min-h-[44px]">
+                        ✅ Đã kiểm tra
+                      </button>
+                      <button onclick="prepareUpdateStatus('${
+                        data.id
+                      }', 'vắng nhà')"
+                              class="btn btn-warning text-sm min-h-[44px] hidden-when-checked">
+                        🏠 Vắng nhà
+                      </button>
+                      ${
+                        data.trangThai !== "chưa kiểm tra"
+                          ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')"
+                                class="btn btn-primary text-sm min-h-[44px]">
+                          ⏳ Chưa kiểm tra
                         </button>`
-                    : ""
-                }
-              </div>
-            </td>
-          `;
+                          : ""
+                      }
+                      ${
+                        showImages && data.hasImage
+                          ? `<button onclick="viewImages('${data.id}')"
+                                class="btn btn-primary text-sm min-h-[44px]">
+                                🖼️ Xem ảnh
+                              </button>`
+                          : ""
+                      }
+                    </div>
+                  </td>
+                `;
           tableBody.appendChild(row);
         });
 
@@ -1266,91 +1258,95 @@
           const card = document.createElement("div");
           card.className = cardClass;
           card.innerHTML = `
-            <div class="card-row">
-              <span class="card-label">Căn hộ:</span>
-              <span class="font-medium">${data.id}</span>
-            </div>
-            
-            <div class="mobile-info-grid">
-              <div class="mobile-info-item">
-                <span class="mobile-info-label">Số công tơ</span>
-                <span class="mobile-info-value">${data.soCongTo}</span>
-              </div>
-              <div class="mobile-info-item">
-                <span class="mobile-info-label">Chỉ số</span>
-                <span class="mobile-info-value">${data.chiSo}</span>
-              </div>
-              <div class="mobile-info-item">
-                <span class="mobile-info-label">Giờ</span>
-                <span class="mobile-info-value">${data.gio}</span>
-              </div>
-              <div class="mobile-info-item">
-                <span class="mobile-info-label">Đến ngày</span>
-                <span class="mobile-info-value">${data.denNgay}</span>
-              </div>
-              <div class="mobile-info-item">
-                <span class="mobile-info-label">Ngày kiểm tra</span>
-                <span class="mobile-info-value">${data.ngayKiemTra || ""}</span>
-              </div>
-            </div>
-            
-            <div class="card-row">
-              <span class="card-label">Trạng thái:</span>
-              <span class="status-badge status-${data.trangThai.replace(
-                /\s+/g,
-                "-"
-              )}">
-                ${data.trangThai}
-              </span>
-            </div>
-            <div class="card-row">
-              <span class="card-label">Ghi chú:</span>
-              <div class="ghi-chu-container">
-                <input type="text" id="mobile_ghiChu_${data.id}" value="${
+                  <div class="card-row">
+                    <span class="card-label">Căn hộ:</span>
+                    <span class="font-medium">${data.id}</span>
+                  </div>
+
+                  <div class="mobile-info-grid">
+                    <div class="mobile-info-item">
+                      <span class="mobile-info-label">Số công tơ</span>
+                      <span class="mobile-info-value">${data.soCongTo}</span>
+                    </div>
+                    <div class="mobile-info-item">
+                      <span class="mobile-info-label">Chỉ số</span>
+                      <span class="mobile-info-value">${data.chiSo}</span>
+                    </div>
+                    <div class="mobile-info-item">
+                      <span class="mobile-info-label">Giờ</span>
+                      <span class="mobile-info-value">${data.gio}</span>
+                    </div>
+                    <div class="mobile-info-item">
+                      <span class="mobile-info-label">Đến ngày</span>
+                      <span class="mobile-info-value">${data.denNgay}</span>
+                    </div>
+                    <div class="mobile-info-item">
+                      <span class="mobile-info-label">Ngày kiểm tra</span>
+                      <span class="mobile-info-value">${
+                        data.ngayKiemTra || ""
+                      }</span>
+                    </div>
+                  </div>
+
+                  <div class="card-row">
+                    <span class="card-label">Trạng thái:</span>
+                    <span class="status-badge status-${data.trangThai.replace(
+                      /\s+/g,
+                      "-"
+                    )}">
+                      ${data.trangThai}
+                    </span>
+                  </div>
+                  <div class="card-row">
+                    <span class="card-label">Ghi chú:</span>
+                    <div class="ghi-chu-container">
+                      <input type="text" id="mobile_ghiChu_${data.id}" value="${
             data.ghiChu || ""
-          }" 
-                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
-                       oninput="autoSaveGhiChu('${data.id}')"
-                       placeholder="Nhập ghi chú...">
-                <button onclick="saveGhiChu('${
-                  data.id
-                }')" class="save-button min-h-[44px]">💾</button>
-                <span id="mobile_saveIndicator_${
-                  data.id
-                }" class="auto-save-indicator">✓</span>
-              </div>
-            </div>
-            <div class="card-row mt-3">
-              <div class="flex flex-col gap-2 w-full">
-                <button onclick="prepareUpdateStatus('${
-                  data.id
-                }', 'đã kiểm tra')" 
-                        class="btn btn-success text-sm min-h-[44px] w-full">
-                  ✅ Đã kiểm tra
-                </button>
-                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
-                        class="btn btn-warning text-sm min-h-[44px] w-full hidden-when-checked">
-                  🏠 Vắng nhà
-                </button>
-                ${
-                  data.trangThai !== "chưa kiểm tra"
-                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
-                          class="btn btn-primary text-sm min-h-[44px] w-full">
-                    ⏳ Chưa kiểm tra
-                  </button>`
-                    : ""
-                }
-                ${
-                  showImages && data.hasImage
-                    ? `<button onclick="viewImages('${data.id}')"
-                          class="btn btn-primary text-sm min-h-[44px] w-full">
-                          🖼️ Xem ảnh
+          }"
+                             class="border p-1 rounded ghi-chu-input min-h-[44px]"
+                             oninput="autoSaveGhiChu('${data.id}')"
+                             placeholder="Nhập ghi chú...">
+                      <button onclick="saveGhiChu('${
+                        data.id
+                      }')" class="save-button min-h-[44px]">💾</button>
+                      <span id="mobile_saveIndicator_${
+                        data.id
+                      }" class="auto-save-indicator">✓</span>
+                    </div>
+                  </div>
+                  <div class="card-row mt-3">
+                    <div class="flex flex-col gap-2 w-full">
+                      <button onclick="prepareUpdateStatus('${
+                        data.id
+                      }', 'đã kiểm tra')"
+                              class="btn btn-success text-sm min-h-[44px] w-full">
+                        ✅ Đã kiểm tra
+                      </button>
+                      <button onclick="prepareUpdateStatus('${
+                        data.id
+                      }', 'vắng nhà')"
+                              class="btn btn-warning text-sm min-h-[44px] w-full hidden-when-checked">
+                        🏠 Vắng nhà
+                      </button>
+                      ${
+                        data.trangThai !== "chưa kiểm tra"
+                          ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')"
+                                class="btn btn-primary text-sm min-h-[44px] w-full">
+                          ⏳ Chưa kiểm tra
                         </button>`
-                    : ""
-                }
-              </div>
-            </div>
-          `;
+                          : ""
+                      }
+                      ${
+                        showImages && data.hasImage
+                          ? `<button onclick="viewImages('${data.id}')"
+                                class="btn btn-primary text-sm min-h-[44px] w-full">
+                                🖼️ Xem ảnh
+                              </button>`
+                          : ""
+                      }
+                    </div>
+                  </div>
+                `;
           mobileCardView.appendChild(card);
         });
 
@@ -1466,24 +1462,24 @@
 
         let html = "";
         urls.forEach((url) => {
-          html += `<img src="${url}" style="width: 100%; max-width: 400px; height: auto; display: block; margin: 10px auto;" 
-              onerror="this.style.display='none'">`;
+          html += `<img src="${url}" style="width: 100%; max-width: 400px; height: auto; display: block; margin: 10px auto;"
+                    onerror="this.style.display='none'">`;
         });
 
         const modalHtml = `
-    <div id="imgModal" style="position:fixed; top:0; left:0; width:100%; height:100%;
-         background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;" onclick="if(event.target.id === 'imgModal') closeImgModal()">
-      <div style="background:white; padding:20px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto;">
-        ${html}
-        <div style="text-align:right; margin-top:10px;">
-          <button onclick="closeImgModal()" 
-                  style="padding:6px 12px; background:red; color:white; border:none; border-radius:4px;">
-            Đóng
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+          <div id="imgModal" style="position:fixed; top:0; left:0; width:100%; height:100%;
+               background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;" onclick="if(event.target.id === 'imgModal') closeImgModal()">
+            <div style="background:white; padding:20px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto;">
+              ${html}
+              <div style="text-align:right; margin-top:10px;">
+                <button onclick="closeImgModal()"
+                        style="padding:6px 12px; background:red; color:white; border:none; border-radius:4px;">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
         document.body.insertAdjacentHTML("beforeend", modalHtml);
       }
 
