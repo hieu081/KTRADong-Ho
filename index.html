@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý Kiểm tra Đồng hồ</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+      .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: none;
+        margin: auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (min-width: 769px) {
+        .table-desktop {
+          display: block;
+        }
+        .mobile-card {
+          display: none !important;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .table-desktop {
+          display: none;
+        }
+        .mobile-card {
+          display: block;
+        }
+        .hidden-mobile-info {
+          display: none !important;
+        }
+      }
+
+      .card {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .card-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .card-label {
+        font-weight: bold;
+        color: #4a5568;
+        min-width: 100px;
+        flex-shrink: 0;
+      }
+
+      .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: bold;
+      }
+      .status-chưa-kiểm-tra {
+        background-color: #fef3c7;
+        color: #d97706;
+      }
+      .status-đã-kiểm-tra {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+      .status-vắng-nhà {
+        background-color: #e0e7ff;
+        color: #3730a3;
+      }
+
+      .auto-save-indicator {
+        font-size: 0.75rem;
+        color: #10b981;
+        margin-left: 0.5rem;
+        display: none;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+      }
+      .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .ghi-chu-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: wrap;
+      }
+      .ghi-chu-input {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .save-button {
+        background-color: #3b82f6;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .save-button:hover {
+        background-color: #2563eb;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+      }
+      .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #2563eb;
+      }
+      .btn-success {
+        background-color: #10b981;
+        color: white;
+      }
+      .btn-success:hover {
+        background-color: #059669;
+      }
+      .btn-warning {
+        background-color: #f59e0b;
+        color: white;
+      }
+      .btn-warning:hover {
+        background-color: #d97706;
+      }
+      .btn-danger {
+        background-color: #ef4444;
+        color: white;
+      }
+      .btn-danger:hover {
+        background-color: #dc2626;
+      }
+
+      .highlight {
+        background-color: #ffeb3b;
+        font-weight: bold;
+      }
+
+      .mobile-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .mobile-info-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .mobile-info-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 2px;
+      }
+      .mobile-info-value {
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .sort-arrow {
+        margin-left: 4px;
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+      }
+      .sort-asc .sort-arrow {
+        border-bottom: 5px solid #000;
+      }
+      .sort-desc .sort-arrow {
+        border-top: 5px solid #000;
+      }
+
+      @media (max-width: 375px) {
+        .container {
+          padding: 0.5rem;
+        }
+        .btn {
+          padding: 10px 12px;
+          font-size: 0.875rem;
+        }
+        .ghi-chu-container {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 4px;
+        }
+        .save-button {
+          width: 100%;
+          padding: 8px;
+        }
+        .mobile-info-grid {
+          grid-template-columns: 1fr;
+        }
+        .card-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+        .card-label {
+          min-width: auto;
+          margin-bottom: 2px;
+        }
+        .ghi-chu-input {
+          width: 100%;
+        }
+        .auto-save-indicator {
+          margin-left: 0;
+          text-align: center;
+          display: block;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .stats-grid {
+          grid-template-columns: 1fr 1fr !important;
+        }
+      }
+      @media (max-width: 375px) {
+        .stats-grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      .image-toggle-btn {
+        background-color: #8b5cf6;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+      .image-toggle-btn:hover {
+        background-color: #7c3aed;
+      }
+
+      .checked-row {
+        background-color: #f0fdf4 !important;
+      }
+
+      .hidden-when-checked {
+        display: block;
+      }
+      .checked-row .hidden-when-checked {
+        display: none !important;
+      }
+
+      .btn-loading {
+        position: relative;
+        color: transparent;
+      }
+      .btn-loading::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-right-color: transparent;
+        animation: spin 1s linear infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4 sm:p-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 mb-4">
+        Quản lý Kiểm tra Đồng hồ
+      </h1>
+
+      <div
+        id="uploadSection"
+        class="bg-white p-4 rounded-lg shadow-md mb-4"
+        style="display: none"
+      >
+        <h2 class="text-lg sm:text-xl font-semibold mb-3">Tải lên file CSV</h2>
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+          <input
+            type="file"
+            id="csvFile"
+            accept=".csv"
+            class="border p-2 rounded flex-1 w-full"
+          />
+          <button
+            onclick="uploadCSV()"
+            class="btn btn-primary w-full sm:w-auto min-h-[44px]"
+          >
+            📤 Tải lên và Lưu
+          </button>
+          <button
+            onclick="exportToCSV()"
+            class="btn btn-success w-full sm:w-auto min-h-[44px]"
+          >
+            📥 Xuất dữ liệu
+          </button>
+        </div>
+        <div id="loadingSpinner" class="loading-spinner mt-4"></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-md mb-4">
+        <h2
+          class="text-lg sm:text-xl font-semibold mb-4 text-center flex items-center justify-center gap-2"
+        >
+          🔍 <span>Tìm kiếm</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div>
+            <label
+              for="searchTang"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Tầng</label
+            >
+            <input
+              type="text"
+              id="searchTang"
+              placeholder="VD: 02"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            />
+          </div>
+
+          <div>
+            <label
+              for="searchCan"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Căn</label
+            >
+            <input
+              type="text"
+              id="searchCan"
+              placeholder="VD: 01"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            />
+          </div>
+
+          <div>
+            <label
+              for="searchTrangThai"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Trạng thái</label
+            >
+            <select
+              id="searchTrangThai"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            >
+              <option value="">Tất cả</option>
+              <option value="chưa kiểm tra">Chưa kiểm tra</option>
+              <option value="đã kiểm tra">Đã kiểm tra</option>
+              <option value="vắng nhà">Vắng nhà</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="searchCoGhiChu"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Có ghi chú</label
+            >
+            <select
+              id="searchCoGhiChu"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            >
+              <option value="">Tất cả</option>
+              <option value="co">Có ghi chú</option>
+              <option value="khong">Không có ghi chú</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="searchNgayKiemTra"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Ngày kiểm tra</label
+            >
+            <input
+              type="text"
+              id="searchNgayKiemTra"
+              placeholder="VD: 29/09"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            />
+          </div>
+
+          <div>
+            <label
+              for="searchGhiChu"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Ghi chú</label
+            >
+            <input
+              type="text"
+              id="searchGhiChu"
+              placeholder="VD: không dùng"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            />
+          </div>
+        </div>
+
+        <div
+          class="flex flex-col sm:flex-row justify-center items-center gap-3 mt-6"
+        >
+          <button
+            type="button"
+            onclick="toggleImageDisplay()"
+            id="toggleImageBtn"
+            class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg w-full sm:w-auto transition-all duration-200"
+          >
+            🖼️ Hiển thị ảnh
+          </button>
+          <button
+            type="button"
+            onclick="resetFilters()"
+            class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-6 rounded-lg w-full sm:w-auto transition-all duration-200"
+          >
+            🔄 Đặt lại
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div
+          class="stats-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          <div
+            class="bg-blue-50 p-4 rounded-lg text-center border border-blue-200"
+          >
+            <div class="text-2xl font-bold text-blue-600" id="totalCount">
+              0
+            </div>
+            <div class="text-sm text-blue-800">Tổng số căn hộ</div>
+          </div>
+          <div
+            class="bg-green-50 p-4 rounded-lg text-center border border-green-200"
+          >
+            <div class="text-2xl font-bold text-green-600" id="checkedCount">
+              0
+            </div>
+            <div class="text-sm text-green-800">Đã kiểm tra</div>
+          </div>
+          <div
+            class="bg-yellow-50 p-4 rounded-lg text-center border border-yellow-200"
+          >
+            <div class="text-2xl font-bold text-yellow-600" id="uncheckedCount">
+              0
+            </div>
+            <div class="text-sm text-yellow-800">Chưa kiểm tra</div>
+          </div>
+          <div
+            class="bg-indigo-50 p-4 rounded-lg text-center border border-indigo-200"
+          >
+            <div class="text-2xl font-bold text-indigo-600" id="absentCount">
+              0
+            </div>
+            <div class="text-sm text-indigo-800">Vắng nhà</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <div class="table-container table-desktop overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('id')"
+                  id="header_id"
+                >
+                  Căn hộ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('soCongTo')"
+                  id="header_soCongTo"
+                >
+                  Số công tơ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('chiSo')"
+                  id="header_chiSo"
+                >
+                  Chỉ số <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('gio')"
+                  id="header_gio"
+                >
+                  Giờ <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('denNgay')"
+                  id="header_denNgay"
+                >
+                  Đến ngày <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('trangThai')"
+                  id="header_trangThai"
+                >
+                  Trạng thái <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onclick="sortBy('ngayKiemTra')"
+                  id="header_ngayKiemTra"
+                >
+                  Ngày kiểm tra <span class="sort-arrow"></span>
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Ghi chú
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="tableBody"
+              class="bg-white divide-y divide-gray-200"
+            ></tbody>
+          </table>
+        </div>
+
+        <div id="mobileCardView" class="mobile-card"></div>
+
+        <div class="flex justify-between items-center mt-4 flex-wrap gap-2">
+          <button
+            onclick="prevPage()"
+            class="btn btn-primary min-h-[44px]"
+            id="prevBtn"
+            disabled
+          >
+            ← Trước
+          </button>
+          <span id="pageInfo" class="text-sm text-gray-600"></span>
+          <button
+            onclick="nextPage()"
+            class="btn btn-primary min-h-[44px]"
+            id="nextBtn"
+            disabled
+          >
+            Sau →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="imageConfirmModal" class="modal">
+      <div class="modal-content">
+        <h3 class="text-lg font-semibold mb-4">Xác nhận hiển thị ảnh</h3>
+        <p id="imageModalMessage">
+          Việc hiển thị ảnh có thể làm chậm hiệu suất khi có nhiều dữ liệu. Bạn
+          có chắc chắn muốn hiển thị ảnh cho tất cả các căn hộ?
+        </p>
+        <div class="modal-buttons">
+          <button
+            onclick="closeImageModal()"
+            class="btn btn-warning min-h-[44px]"
+          >
+            Hủy
+          </button>
+          <button
+            onclick="confirmImageDisplay()"
+            class="btn btn-success min-h-[44px]"
+            id="confirmImageBtn"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+      <div class="modal-content">
+        <h3 class="text-lg font-semibold mb-4" id="modalTitle">Xác nhận</h3>
+        <p id="modalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+        <div class="modal-buttons">
+          <button onclick="closeModal()" class="btn btn-warning min-h-[44px]">
+            Hủy
+          </button>
+          <button
+            onclick="confirmAction()"
+            class="btn btn-success min-h-[44px]"
+            id="confirmBtn"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDn7GLPt_K-7Os2olo6XgdS4_kTtPKn_ng",
+        authDomain: "ktradong-ho.firebaseapp.com",
+        databaseURL: "https://ktradong-ho-default-rtdb.firebaseio.com",
+        projectId: "ktradong-ho",
+        storageBucket: "ktradong-ho.firebasestorage.app",
+        messagingSenderId: "806158456825",
+        appId: "1:806158456825:web:2a0ee6650e055488cc8f28",
+        measurementId: "G-6NZ03Z84KY",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let allData = [];
+      let filteredData = [];
+      let pendingAction = null;
+      let sortColumn = "id";
+      let sortDirection = "asc";
+      let saveTimeouts = {};
+      let imageCache = new Map();
+      let debounceTimers = {};
+
+      let showImages = false;
+      let isLoading = false;
+
+      function parseCanHo(maCanHo) {
+        const match = maCanHo.match(/^P1\.(\d{2})(.*)$/);
+        if (match) {
+          return { tang: match[1], can: match[2] };
+        }
+        return { tang: "Unknown", can: maCanHo };
+      }
+
+      function showToast(message, type = "info") {
+        Toastify({
+          text: message,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: type === "error" ? "#e74c3c" : "#2ecc71",
+          stopOnFocus: true,
+        }).showToast();
+      }
+
+      function showModal(title, message, action) {
+        document.getElementById("modalTitle").textContent = title;
+        document.getElementById("modalMessage").textContent = message;
+        document.getElementById("confirmModal").style.display = "block";
+        pendingAction = action;
+
+        const confirmBtn = document.getElementById("confirmBtn");
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove("btn-loading");
+        confirmBtn.textContent = "Xác nhận";
+      }
+
+      function closeModal() {
+        document.getElementById("confirmModal").style.display = "none";
+        pendingAction = null;
+      }
+
+      function showImageModal() {
+        document.getElementById("imageConfirmModal").style.display = "block";
+      }
+
+      function closeImageModal() {
+        document.getElementById("imageConfirmModal").style.display = "none";
+      }
+
+      function confirmAction() {
+        if (isLoading) return;
+
+        if (pendingAction) {
+          const confirmBtn = document.getElementById("confirmBtn");
+          confirmBtn.disabled = true;
+          confirmBtn.classList.add("btn-loading");
+          confirmBtn.textContent = "";
+
+          isLoading = true;
+
+          try {
+            pendingAction();
+          } catch (error) {
+            console.error("Lỗi khi thực hiện hành động:", error);
+            showToast("Có lỗi xảy ra: " + error.message, "error");
+          } finally {
+            setTimeout(() => {
+              isLoading = false;
+              closeModal();
+            }, 1000);
+          }
+        } else {
+          closeModal();
+        }
+      }
+
+      function confirmImageDisplay() {
+        showImages = true;
+        const toggleBtn = document.getElementById("toggleImageBtn");
+        toggleBtn.textContent = "🖼️ Ẩn ảnh";
+        toggleBtn.style.backgroundColor = "#ef4444";
+
+        checkAllImages().then(() => {
+          renderTable();
+          showToast("Đã bật hiển thị ảnh cho tất cả căn hộ");
+        });
+
+        closeImageModal();
+      }
+      function resetFilters() {
+        document.getElementById("searchTang").value = "";
+        document.getElementById("searchCan").value = "";
+        document.getElementById("searchTrangThai").value = "";
+        document.getElementById("searchCoGhiChu").value = "";
+        document.getElementById("searchNgayKiemTra").value = "";
+        document.getElementById("searchGhiChu").value = "";
+        filterData(true);
+      }
+      function toggleImageDisplay() {
+        if (!showImages) {
+          showImageModal();
+        } else {
+          showImages = false;
+          const toggleBtn = document.getElementById("toggleImageBtn");
+          toggleBtn.textContent = "🖼️ Hiển thị ảnh";
+          toggleBtn.style.backgroundColor = "#8b5cf6";
+          renderTable();
+          showToast("Đã tắt hiển thị ảnh");
+        }
+      }
+
+      function checkAllImages() {
+        const spinner = document.getElementById("loadingSpinner");
+        spinner.style.display = "block";
+
+        const promises = allData.map((data) =>
+          checkHasImage(data.id).then((has) => {
+            data.hasImage = has;
+            return has;
+          })
+        );
+
+        return Promise.all(promises).finally(() => {
+          spinner.style.display = "none";
+        });
+      }
+
+      function debounce(func, wait) {
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(debounceTimers[func.name]);
+            func(...args);
+          };
+          clearTimeout(debounceTimers[func.name]);
+          debounceTimers[func.name] = setTimeout(later, wait);
+        };
+      }
+
+      function initSearchEvents() {
+        const searchInputs = [
+          "searchTang",
+          "searchCan",
+          "searchTrangThai",
+          "searchCoGhiChu",
+          "searchNgayKiemTra",
+          "searchGhiChu",
+        ];
+
+        const debouncedFilter = debounce(() => filterData(true), 300);
+
+        searchInputs.forEach((id) => {
+          const element = document.getElementById(id);
+          if (element) {
+            if (element.tagName === "INPUT") {
+              element.addEventListener("input", debouncedFilter);
+            } else {
+              element.addEventListener("change", debouncedFilter);
+            }
+          }
+        });
+      }
+
+      function uploadCSV() {
+        const fileInput = document.getElementById("csvFile");
+        const spinner = document.getElementById("loadingSpinner");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          showToast("Vui lòng chọn file CSV!", "error");
+          return;
+        }
+
+        spinner.style.display = "block";
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          try {
+            const csv = e.target.result;
+            const lines = csv.split("\n").slice(1);
+            const batchUpdates = {};
+
+            lines.forEach((line) => {
+              if (line.trim()) {
+                const [canHo, soCongTo, chiSo, gio, denNgay] = line.split(",");
+                if (canHo && canHo.trim()) {
+                  const { tang, can } = parseCanHo(canHo.trim());
+
+                  const key = canHo.replace(".", "_");
+
+                  batchUpdates[`apartments/${key}/soCongTo`] =
+                    soCongTo || "NULL";
+                  batchUpdates[`apartments/${key}/chiSo`] =
+                    parseFloat(chiSo) || 0;
+                  batchUpdates[`apartments/${key}/gio`] = gio || "";
+                  batchUpdates[`apartments/${key}/denNgay`] = denNgay || "";
+                  batchUpdates[`apartments/${key}/tang`] = tang;
+                  batchUpdates[`apartments/${key}/can`] = can;
+                  batchUpdates[`apartments/${key}/lastUpdated`] =
+                    firebase.database.ServerValue.TIMESTAMP;
+                }
+              }
+            });
+
+            db.ref()
+              .update(batchUpdates)
+              .then(() => {
+                showToast(
+                  `Đã cập nhật ${
+                    lines.filter((line) => line.trim()).length
+                  } căn hộ thành công!`
+                );
+                fileInput.value = "";
+              })
+              .catch((err) => {
+                console.error("Lỗi Firebase:", err);
+                showToast("Lỗi khi lưu dữ liệu: " + err.message, "error");
+              })
+              .finally(() => (spinner.style.display = "none"));
+          } catch (error) {
+            console.error("Lỗi xử lý CSV:", error);
+            showToast("Lỗi khi xử lý file CSV: " + error.message, "error");
+            spinner.style.display = "none";
+          }
+        };
+
+        reader.onerror = () => {
+          showToast("Lỗi khi đọc file!", "error");
+          spinner.style.display = "none";
+        };
+
+        reader.readAsText(file, "UTF-8");
+      }
+
+      function exportToCSV() {
+        if (filteredData.length === 0) {
+          showToast("Không có dữ liệu để xuất!", "error");
+          return;
+        }
+
+        let csvContent =
+          "Căn hộ,Số công tơ,Chỉ số,Giờ,Đến ngày,Trạng thái,Ngày kiểm tra,Ghi chú\n";
+        filteredData.forEach((data) => {
+          csvContent += `${data.id},${data.soCongTo},${data.chiSo},${
+            data.gio
+          },${data.denNgay},${data.trangThai},${data.ngayKiemTra || ""},${
+            data.ghiChu || ""
+          }\n`;
+        });
+
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "dulieu_dongho.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+
+        showToast("Đã xuất dữ liệu thành công!");
+      }
+
+      function filterData(resetPage = false) {
+        const searchTang = document
+          .getElementById("searchTang")
+          .value.toLowerCase();
+        const searchCan = document
+          .getElementById("searchCan")
+          .value.toLowerCase();
+        const searchTrangThai =
+          document.getElementById("searchTrangThai").value;
+        const searchCoGhiChu = document.getElementById("searchCoGhiChu").value;
+        const searchNgayKiemTra = document
+          .getElementById("searchNgayKiemTra")
+          .value.toLowerCase();
+        const searchGhiChu = document
+          .getElementById("searchGhiChu")
+          .value.toLowerCase();
+
+        filteredData = allData.filter((data) => {
+          const matchTang =
+            !searchTang || data.tang.toLowerCase().includes(searchTang);
+          const matchCan =
+            !searchCan || data.can.toLowerCase().includes(searchCan);
+          const matchTrangThai =
+            !searchTrangThai || data.trangThai === searchTrangThai;
+
+          let matchCoGhiChu = true;
+          if (searchCoGhiChu === "co") {
+            matchCoGhiChu = data.ghiChu && data.ghiChu.trim() !== "";
+          } else if (searchCoGhiChu === "khong") {
+            matchCoGhiChu = !data.ghiChu || data.ghiChu.trim() === "";
+          }
+
+          const matchNgayKiemTra =
+            !searchNgayKiemTra ||
+            (data.ngayKiemTra &&
+              data.ngayKiemTra.toLowerCase().includes(searchNgayKiemTra));
+
+          const matchGhiChu =
+            !searchGhiChu ||
+            (data.ghiChu && data.ghiChu.toLowerCase().includes(searchGhiChu));
+
+          return (
+            matchTang &&
+            matchCan &&
+            matchTrangThai &&
+            matchCoGhiChu &&
+            matchNgayKiemTra &&
+            matchGhiChu
+          );
+        });
+
+        if (resetPage) {
+          currentPage = 1;
+        }
+
+        renderTable();
+        updateStatistics();
+      }
+      function updateStatistics() {
+        const total = filteredData.length;
+        const checked = filteredData.filter(
+          (item) => item.trangThai === "đã kiểm tra"
+        ).length;
+        const unchecked = filteredData.filter(
+          (item) => item.trangThai === "chưa kiểm tra"
+        ).length;
+        const absent = filteredData.filter(
+          (item) => item.trangThai === "vắng nhà"
+        ).length;
+
+        document.getElementById("totalCount").textContent = total;
+        document.getElementById("checkedCount").textContent = checked;
+        document.getElementById("uncheckedCount").textContent = unchecked;
+        document.getElementById("absentCount").textContent = absent;
+      }
+
+      function loadData() {
+        const spinner = document.getElementById("loadingSpinner");
+        spinner.style.display = "block";
+
+        db.ref("apartments").on(
+          "value",
+          (snapshot) => {
+            allData = [];
+            snapshot.forEach((child) => {
+              const data = child.val();
+              const canHo = child.key.replace("_", ".");
+              allData.push({
+                id: canHo,
+                ...data,
+                ghiChu: data.ghiChu || "",
+                ngayKiemTra: data.ngayKiemTra || "",
+                trangThai: data.trangThai || "chưa kiểm tra",
+              });
+            });
+
+            const initialData = allData.slice(0, 0);
+            const imageChecks = initialData.map((data) =>
+              checkHasImage(data.id).then((has) => (data.hasImage = has))
+            );
+            Promise.all(imageChecks).then(() => {
+              sortData();
+              filterData(false);
+              spinner.style.display = "none";
+            });
+          },
+          (err) => {
+            showToast("Lỗi khi tải dữ liệu: " + err.message, "error");
+            spinner.style.display = "none";
+          }
+        );
+      }
+
+      db.ref("config/taifile").on("value", (snap) => {
+        const val = snap.val();
+        const uploadSection = document.getElementById("uploadSection");
+        uploadSection.style.display = val === 1 ? "block" : "none";
+      });
+
+      function sortData() {
+        allData.sort((a, b) => {
+          let valA = a[sortColumn];
+          let valB = b[sortColumn];
+
+          if (sortColumn === "chiSo") {
+            valA = parseFloat(valA) || 0;
+            valB = parseFloat(valB) || 0;
+          }
+
+          if (typeof valA === "string") {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+          }
+
+          if (valA < valB) {
+            return sortDirection === "asc" ? -1 : 1;
+          }
+          if (valA > valB) {
+            return sortDirection === "asc" ? 1 : -1;
+          }
+          return 0;
+        });
+      }
+
+      function sortBy(column) {
+        if (sortColumn === column) {
+          sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          sortColumn = column;
+          sortDirection = "asc";
+        }
+
+        document.querySelectorAll("th").forEach((th) => {
+          th.classList.remove("sort-asc", "sort-desc");
+        });
+        const header = document.getElementById(`header_${column}`);
+        if (header) {
+          header.classList.add(`sort-${sortDirection}`);
+        }
+
+        sortData();
+        filterData(false);
+      }
+
+      function autoSaveGhiChu(id) {
+        const desktopIndicator = document.getElementById(`saveIndicator_${id}`);
+        const mobileIndicator = document.getElementById(
+          `mobile_saveIndicator_${id}`
+        );
+        if (desktopIndicator) desktopIndicator.style.display = "inline";
+        if (mobileIndicator) mobileIndicator.style.display = "inline";
+
+        if (saveTimeouts[id]) clearTimeout(saveTimeouts[id]);
+
+        saveTimeouts[id] = setTimeout(() => {
+          saveGhiChu(id);
+        }, 1500);
+      }
+
+      function getGhiChuValue(id) {
+        const mobileInput = document.getElementById(`mobile_ghiChu_${id}`);
+        if (mobileInput && mobileInput.offsetParent !== null) {
+          return mobileInput.value;
+        }
+
+        const desktopInput = document.getElementById(`ghiChu_${id}`);
+        return desktopInput ? desktopInput.value : "";
+      }
+
+      function saveGhiChu(id) {
+        const ghiChu = getGhiChuValue(id);
+
+        db.ref(`apartments/${id.replace(".", "_")}`)
+          .update({
+            ghiChu: ghiChu,
+            lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+          })
+          .then(() => {
+            const desktopIndicator = document.getElementById(
+              `saveIndicator_${id}`
+            );
+            const mobileIndicator = document.getElementById(
+              `mobile_saveIndicator_${id}`
+            );
+            if (desktopIndicator) desktopIndicator.style.display = "none";
+            if (mobileIndicator) mobileIndicator.style.display = "none";
+
+            showToast(`Đã lưu ghi chú cho ${id}`);
+
+            const itemIndex = allData.findIndex((item) => item.id === id);
+            if (itemIndex !== -1) {
+              allData[itemIndex].ghiChu = ghiChu;
+            }
+          })
+          .catch((err) => {
+            showToast("Lỗi khi lưu ghi chú: " + err.message, "error");
+          });
+      }
+
+      function renderTable() {
+        const tableBody = document.getElementById("tableBody");
+        const mobileCardView = document.getElementById("mobileCardView");
+        tableBody.innerHTML = "";
+        mobileCardView.innerHTML = "";
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedData = filteredData.slice(start, end);
+
+        if (paginatedData.length === 0) {
+          const emptyRow = document.createElement("tr");
+          emptyRow.innerHTML = `<td colspan="9" class="text-center py-4 text-gray-500">Không có dữ liệu</td>`;
+          tableBody.appendChild(emptyRow);
+
+          const emptyCard = document.createElement("div");
+          emptyCard.className = "card text-center py-4 text-gray-500";
+          emptyCard.textContent = "Không có dữ liệu";
+          mobileCardView.appendChild(emptyCard);
+        }
+
+        paginatedData.forEach((data) => {
+          const isChecked = data.trangThai === "đã kiểm tra";
+          const rowClass = isChecked ? "checked-row" : "";
+
+          const row = document.createElement("tr");
+          row.className = rowClass;
+          row.innerHTML = `
+            <td class="px-4 py-2 whitespace-nowrap font-medium">${data.id}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.soCongTo}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.chiSo}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.gio}</td>
+            <td class="px-4 py-2 whitespace-nowrap">${data.denNgay}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <span class="status-badge status-${data.trangThai.replace(
+                /\s+/g,
+                "-"
+              )}">
+                ${data.trangThai}
+              </span>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">${
+              data.ngayKiemTra || ""
+            }</td>
+            <td class="px-4 py-2">
+              <div class="ghi-chu-container">
+                <input type="text" id="ghiChu_${data.id}" value="${
+            data.ghiChu || ""
+          }" 
+                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
+                       oninput="autoSaveGhiChu('${data.id}')"
+                       placeholder="Nhập ghi chú...">
+                <button onclick="saveGhiChu('${
+                  data.id
+                }')" class="save-button min-h-[44px]">💾</button>
+                <span id="saveIndicator_${
+                  data.id
+                }" class="auto-save-indicator">✓</span>
+              </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <div class="flex flex-col gap-1">
+                <button onclick="prepareUpdateStatus('${
+                  data.id
+                }', 'đã kiểm tra')" 
+                        class="btn btn-success text-sm min-h-[44px]">
+                  ✅ Đã kiểm tra
+                </button>
+                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
+                        class="btn btn-warning text-sm min-h-[44px] hidden-when-checked">
+                  🏠 Vắng nhà
+                </button>
+                ${
+                  data.trangThai !== "chưa kiểm tra"
+                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
+                          class="btn btn-primary text-sm min-h-[44px]">
+                    ⏳ Chưa kiểm tra
+                  </button>`
+                    : ""
+                }
+                ${
+                  showImages && data.hasImage
+                    ? `<button onclick="viewImages('${data.id}')"
+                          class="btn btn-primary text-sm min-h-[44px]">
+                          🖼️ Xem ảnh
+                        </button>`
+                    : ""
+                }
+              </div>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        paginatedData.forEach((data) => {
+          const isChecked = data.trangThai === "đã kiểm tra";
+          const cardClass = isChecked ? "card checked-row" : "card";
+
+          const card = document.createElement("div");
+          card.className = cardClass;
+          card.innerHTML = `
+            <div class="card-row">
+              <span class="card-label">Căn hộ:</span>
+              <span class="font-medium">${data.id}</span>
+            </div>
+            
+            <div class="mobile-info-grid">
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Số công tơ</span>
+                <span class="mobile-info-value">${data.soCongTo}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Chỉ số</span>
+                <span class="mobile-info-value">${data.chiSo}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Giờ</span>
+                <span class="mobile-info-value">${data.gio}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Đến ngày</span>
+                <span class="mobile-info-value">${data.denNgay}</span>
+              </div>
+              <div class="mobile-info-item">
+                <span class="mobile-info-label">Ngày kiểm tra</span>
+                <span class="mobile-info-value">${data.ngayKiemTra || ""}</span>
+              </div>
+            </div>
+            
+            <div class="card-row">
+              <span class="card-label">Trạng thái:</span>
+              <span class="status-badge status-${data.trangThai.replace(
+                /\s+/g,
+                "-"
+              )}">
+                ${data.trangThai}
+              </span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Ghi chú:</span>
+              <div class="ghi-chu-container">
+                <input type="text" id="mobile_ghiChu_${data.id}" value="${
+            data.ghiChu || ""
+          }" 
+                       class="border p-1 rounded ghi-chu-input min-h-[44px]" 
+                       oninput="autoSaveGhiChu('${data.id}')"
+                       placeholder="Nhập ghi chú...">
+                <button onclick="saveGhiChu('${
+                  data.id
+                }')" class="save-button min-h-[44px]">💾</button>
+                <span id="mobile_saveIndicator_${
+                  data.id
+                }" class="auto-save-indicator">✓</span>
+              </div>
+            </div>
+            <div class="card-row mt-3">
+              <div class="flex flex-col gap-2 w-full">
+                <button onclick="prepareUpdateStatus('${
+                  data.id
+                }', 'đã kiểm tra')" 
+                        class="btn btn-success text-sm min-h-[44px] w-full">
+                  ✅ Đã kiểm tra
+                </button>
+                <button onclick="prepareUpdateStatus('${data.id}', 'vắng nhà')" 
+                        class="btn btn-warning text-sm min-h-[44px] w-full hidden-when-checked">
+                  🏠 Vắng nhà
+                </button>
+                ${
+                  data.trangThai !== "chưa kiểm tra"
+                    ? `<button onclick="prepareUpdateStatus('${data.id}', 'chưa kiểm tra')" 
+                          class="btn btn-primary text-sm min-h-[44px] w-full">
+                    ⏳ Chưa kiểm tra
+                  </button>`
+                    : ""
+                }
+                ${
+                  showImages && data.hasImage
+                    ? `<button onclick="viewImages('${data.id}')"
+                          class="btn btn-primary text-sm min-h-[44px] w-full">
+                          🖼️ Xem ảnh
+                        </button>`
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+          mobileCardView.appendChild(card);
+        });
+
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+        }
+        document.getElementById(
+          "pageInfo"
+        ).textContent = `Trang ${currentPage} / ${totalPages} (${filteredData.length} kết quả)`;
+        document.getElementById("prevBtn").disabled = currentPage === 1;
+        document.getElementById("nextBtn").disabled =
+          currentPage === totalPages || totalPages === 0;
+
+        updateStatistics();
+      }
+
+      function prepareUpdateStatus(id, newStatus) {
+        const statusText = {
+          "đã kiểm tra": "đã kiểm tra",
+          "chưa kiểm tra": "chưa kiểm tra",
+          "vắng nhà": "vắng nhà",
+        }[newStatus];
+
+        showModal(
+          "Xác nhận thay đổi trạng thái",
+          `Bạn có chắc chắn muốn đánh dấu căn hộ ${id} là "${statusText}" không?`,
+          () => updateStatus(id, newStatus)
+        );
+      }
+
+      function updateStatus(id, newStatus) {
+        const ghiChu = getGhiChuValue(id);
+        const updateData = {
+          trangThai: newStatus,
+          ghiChu: ghiChu,
+          lastUpdated: firebase.database.ServerValue.TIMESTAMP,
+        };
+
+        if (newStatus === "đã kiểm tra" || newStatus === "vắng nhà") {
+          const today = new Date();
+          const day = String(today.getDate()).padStart(2, "0");
+          const month = String(today.getMonth() + 1).padStart(2, "0");
+          updateData.ngayKiemTra = `${day}/${month}`;
+        } else {
+          updateData.ngayKiemTra = "";
+        }
+
+        db.ref(`apartments/${id.replace(".", "_")}`)
+          .update(updateData)
+          .then(() => {
+            showToast(`Đã cập nhật ${id} thành "${newStatus}"`);
+
+            const itemIndex = allData.findIndex((item) => item.id === id);
+            if (itemIndex !== -1) {
+              allData[itemIndex].trangThai = newStatus;
+              allData[itemIndex].ngayKiemTra = updateData.ngayKiemTra;
+              renderTable();
+            }
+          })
+          .catch((err) => {
+            showToast("Lỗi khi cập nhật: " + err.message, "error");
+          });
+      }
+
+      function prevPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTable();
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTable();
+        }
+      }
+
+      function checkHasImage(id) {
+        if (imageCache.has(id)) {
+          return Promise.resolve(imageCache.get(id));
+        }
+
+        const baseUrl = "https://hieu081.github.io/KTRADong-Ho/images/";
+        const urls = [`${baseUrl}${id}-1.webp`, `${baseUrl}${id}-2.webp`];
+        const promises = urls.map(
+          (url) =>
+            new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                imageCache.set(id, true);
+                resolve(true);
+              };
+              img.onerror = () => resolve(false);
+              img.src = url;
+            })
+        );
+        return Promise.all(promises).then((results) => {
+          const hasImage = results.some((r) => r);
+          imageCache.set(id, hasImage);
+          return hasImage;
+        });
+      }
+
+      function viewImages(apartmentId) {
+        const baseUrl = "https://hieu081.github.io/KTRADong-Ho/images/";
+        const urls = [
+          `${baseUrl}${apartmentId}-1.webp`,
+          `${baseUrl}${apartmentId}-2.webp`,
+        ];
+
+        let html = "";
+        urls.forEach((url) => {
+          html += `<img src="${url}" style="width: 100%; max-width: 400px; height: auto; display: block; margin: 10px auto;" 
+              onerror="this.style.display='none'">`;
+        });
+
+        const modalHtml = `
+    <div id="imgModal" style="position:fixed; top:0; left:0; width:100%; height:100%;
+         background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;" onclick="if(event.target.id === 'imgModal') closeImgModal()">
+      <div style="background:white; padding:20px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto;">
+        ${html}
+        <div style="text-align:right; margin-top:10px;">
+          <button onclick="closeImgModal()" 
+                  style="padding:6px 12px; background:red; color:white; border:none; border-radius:4px;">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+      }
+
+      function closeImgModal() {
+        const modal = document.getElementById("imgModal");
+        if (modal) modal.remove();
+      }
+
+      function initApp() {
+        loadData();
+        initSearchEvents();
+
+        document.addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            const activeElement = document.activeElement;
+            if (
+              activeElement &&
+              activeElement.classList.contains("ghi-chu-input")
+            ) {
+              const id = activeElement.id
+                .replace("ghiChu_", "")
+                .replace("mobile_ghiChu_", "");
+              saveGhiChu(id);
+            }
+          }
+        });
+      }
+
+      initApp();
+    </script>
+  </body>
+</html>
