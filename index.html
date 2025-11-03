@@ -455,6 +455,20 @@
               class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
             />
           </div>
+
+          <div>
+            <label
+              for="searchSoCongTo"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Số công tơ</label
+            >
+            <input
+              type="text"
+              id="searchSoCongTo"
+              placeholder="VD: 12345"
+              class="border border-gray-300 p-2 rounded-lg w-full focus:ring-2 focus:ring-purple-500 outline-none min-h-[44px]"
+            />
+          </div>
         </div>
 
         <div
@@ -777,6 +791,7 @@
         document.getElementById("searchCoGhiChu").value = "";
         document.getElementById("searchNgayKiemTra").value = "";
         document.getElementById("searchGhiChu").value = "";
+        document.getElementById("searchSoCongTo").value = "";
         filterData(true);
       }
       function toggleImageDisplay() {
@@ -827,6 +842,7 @@
           "searchCoGhiChu",
           "searchNgayKiemTra",
           "searchGhiChu",
+          "searchSoCongTo",
         ];
 
         const debouncedFilter = debounce(() => filterData(true), 300);
@@ -919,17 +935,15 @@
           showToast("Không có dữ liệu để xuất!", "error");
           return;
         }
-
         let csvContent =
-          "Căn hộ,Số công tơ,Chỉ số,Giờ,Đến ngày,Trạng thái,Ngày kiểm tra,Ghi chú\n";
+          '"Căn hộ","Số công tơ","Chỉ số","Đến ngày","Ghi chú"\n';
         filteredData.forEach((data) => {
-          csvContent += `${data.id},${data.soCongTo},${data.chiSo},${
-            data.gio
-          },${data.denNgay},${data.trangThai},${data.ngayKiemTra || ""},${
-            data.ghiChu || ""
-          }\n`;
+          const escape = (str) =>
+            `"${(str || "").toString().replace(/"/g, '""')}"`;
+          csvContent += `${escape(data.id)},${escape(data.soCongTo)},${escape(
+            data.chiSo
+          )},${escape(data.denNgay)},${escape(data.ghiChu)}\n`;
         });
-
         const bom = "\uFEFF";
         const blob = new Blob([bom + csvContent], {
           type: "text/csv;charset=utf-8;",
@@ -940,7 +954,6 @@
         link.download = "dulieu_dongho.csv";
         link.click();
         URL.revokeObjectURL(url);
-
         showToast("Đã xuất dữ liệu thành công!");
       }
 
@@ -959,6 +972,9 @@
           .value.toLowerCase();
         const searchGhiChu = document
           .getElementById("searchGhiChu")
+          .value.toLowerCase();
+        const searchSoCongTo = document
+          .getElementById("searchSoCongTo")
           .value.toLowerCase();
 
         filteredData = allData.filter((data) => {
@@ -985,13 +1001,19 @@
             !searchGhiChu ||
             (data.ghiChu && data.ghiChu.toLowerCase().includes(searchGhiChu));
 
+          const matchSoCongTo =
+            !searchSoCongTo ||
+            (data.soCongTo &&
+              data.soCongTo.toLowerCase().includes(searchSoCongTo));
+
           return (
             matchTang &&
             matchCan &&
             matchTrangThai &&
             matchCoGhiChu &&
             matchNgayKiemTra &&
-            matchGhiChu
+            matchGhiChu &&
+            matchSoCongTo
           );
         });
 
